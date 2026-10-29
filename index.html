@@ -206,7 +206,11 @@
   }
 
   /* ---------- Main scroll area ---------- */
-  .view-wrap{flex:1;min-height:0;overflow-y:auto;padding:12px;padding-bottom:90px;}
+  .view-wrap{flex:1;min-height:0;overflow-y:auto;padding:12px;padding-bottom:90px;overflow-anchor:none;}
+  /* El scroll infinito compensa la posición manualmente al insertar/quitar
+     bloques. Si además el navegador aplica su "scroll anchoring" automático,
+     el ajuste se hace dos veces y la vista salta. Se desactiva. */
+  .week-grid, .period-block, .week-col, .day-block{overflow-anchor:none;}
 
   /* ---------- Day view ---------- */
   .empty-state{
@@ -1275,6 +1279,27 @@
   ["touchstart","wheel","pointerdown"].forEach(function(evt){
     viewWrap.addEventListener(evt, cancelScrollLock, {passive:true});
   });
+  /* Ajuste de scrollTop "a prueba de inercia": al insertar o quitar bloques
+     durante el scroll continuo hay que compensar la posición; si se hace en
+     caliente, el scroll nativo/inercial del móvil pelea contra el valor y la
+     vista brinca. Se congela el overflow un instante para que el ajuste
+     quede firme y se libera en el siguiente frame. */
+  function freezeAndAdjustScroll(adjustFn){
+    var prevOverflow = viewWrap.style.overflowY;
+    viewWrap.style.overflowY = "hidden";
+    adjustFn();
+    void viewWrap.offsetHeight;
+    requestAnimationFrame(function(){
+      if(viewWrap.style.overflowY === "hidden") viewWrap.style.overflowY = prevOverflow;
+    });
+  }
+  /* Compensa el desplazamiento visual real (medido sobre un elemento ancla)
+     tras insertar o quitar bloques. Si el navegador ya reposicionó por su
+     cuenta el delta es 0 y no se toca nada. */
+  function compensateScrollShift(delta){
+    if(!delta || Math.abs(delta) < 1) return;
+    freezeAndAdjustScroll(function(){ viewWrap.scrollTop += delta; });
+  }
 
   function renderContinuousView(){
     contState.blocks = [];
@@ -1305,12 +1330,13 @@
     grid.insertAdjacentHTML("beforeend", buildPeriodBlock(nextStart));
     var el = grid.querySelector('.period-block[data-period="'+toYMD(nextStart)+'"]');
     contState.blocks.push({ key: toYMD(nextStart), start: nextStart, el: el });
-    if(contState.blocks.length > 6){
+    if(contState.blocks.length > 8){
       var removed = contState.blocks.shift();
-      var beforeH = grid.scrollHeight;
+      var anchorA = contState.blocks[0].el;
+      var beforeA = anchorA.getBoundingClientRect().top;
       removed.el.remove();
-      var afterH = grid.scrollHeight;
-      viewWrap.scrollTop -= (beforeH - afterH);
+      var afterA = anchorA.getBoundingClientRect().top;
+      compensateScrollShift(afterA - beforeA);
     }
   }
   function prependPrevPeriod(){
@@ -1318,13 +1344,14 @@
     var prevStart = periodAdd(firstBlock.start, -1);
     var grid = document.getElementById("contGrid");
     if(!grid) return;
-    var beforeH = grid.scrollHeight;
+    var anchorB = firstBlock.el;
+    var beforeB = anchorB.getBoundingClientRect().top;
     grid.insertAdjacentHTML("afterbegin", buildPeriodBlock(prevStart));
     var el = grid.querySelector('.period-block[data-period="'+toYMD(prevStart)+'"]');
     contState.blocks.unshift({ key: toYMD(prevStart), start: prevStart, el: el });
-    var afterH = grid.scrollHeight;
-    viewWrap.scrollTop += (afterH - beforeH);
-    if(contState.blocks.length > 6){
+    var afterB = anchorB.getBoundingClientRect().top;
+    compensateScrollShift(afterB - beforeB);
+    if(contState.blocks.length > 8){
       var removed = contState.blocks.pop();
       removed.el.remove();
     }
