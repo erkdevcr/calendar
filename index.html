@@ -1,0 +1,1940 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Calendario Escolar</title>
+<style>
+  :root{
+    --bg:#cfd2d9;
+    --card:#ffffff;
+    --card-head:#eef0f3;
+    --ink:#1d2129;
+    --ink-soft:#6b7280;
+    --border:#e5e7eb;
+    --accent:#4f6df5;
+    --accent-ink:#ffffff;
+    --danger:#e2504a;
+    --radius:14px;
+    --radius-sm:9px;
+    --weekend:#eceef2;
+    --today-ring:#4f6df5;
+    --shadow:0 2px 6px rgba(16,24,40,.10), 0 4px 12px rgba(16,24,40,.09);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;overflow:hidden;}
+  body{
+    margin:0;background:var(--bg);color:var(--ink);
+    display:flex;flex-direction:column;
+    overflow-x:hidden;overflow-y:hidden;
+    -webkit-font-smoothing:antialiased;
+    padding-bottom:env(safe-area-inset-bottom);
+    transition:background-color .35s linear;
+  }
+  button, select, input, textarea{font-family:inherit;}
+
+  /* ---------- Top bar ---------- */
+  .topbar{
+    position:sticky;top:0;z-index:20;
+    background:var(--card);
+    border-bottom:1px solid var(--border);
+    padding:0;
+    box-shadow:0 3px 8px rgba(16,24,40,.12);
+  }
+  .topbar-band{
+    background:linear-gradient(115deg,#4f6df5 0%,#6f5bf0 48%,#9b5de5 100%);
+    padding:calc(6px + env(safe-area-inset-top)) 12px 7px;
+    transition:background .35s ease;
+  }
+  .topbar-main{
+    background:#f8f6ff;
+    padding:10px 12px 10px;
+    transition:background-color .35s ease;
+  }
+  .topbar-row{
+    display:flex;gap:8px;align-items:center;
+  }
+  .picker{
+    flex:1;
+    display:flex;align-items:center;gap:6px;
+    background:var(--bg);
+    border:1px solid var(--border);
+    border-radius:var(--radius-sm);
+    padding:9px 10px;
+    min-width:0;
+    cursor:pointer;
+    text-align:left;
+  }
+  .picker .dot{width:10px;height:10px;border-radius:50%;flex:none;}
+  .picker select{
+    flex:1;min-width:0;border:none;background:transparent;
+    font-size:15px;font-weight:600;color:var(--ink);appearance:none;
+    -webkit-appearance:none;
+  }
+  .picker .picker-label{
+    flex:1;min-width:0;font-size:15px;font-weight:600;color:var(--ink);
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+  .picker .ico{flex:none;color:var(--ink-soft);font-size:12px;}
+  .student-check-row{
+    display:flex;align-items:center;gap:10px;background:var(--bg);
+    border-radius:12px;padding:11px 12px;margin-bottom:8px;
+  }
+  .student-check-row .dot{width:14px;height:14px;border-radius:50%;flex:none;}
+  .student-check-row .name{flex:1;font-weight:600;font-size:14.5px;}
+  .student-check-row .check{
+    width:22px;height:22px;border-radius:7px;border:2px solid var(--border);
+    flex:none;display:flex;align-items:center;justify-content:center;font-size:14px;color:#fff;
+  }
+  .student-check-row.checked .check{background:var(--accent);border-color:var(--accent);}
+
+  .avatar-row{display:flex;flex-wrap:wrap;gap:12px;}
+  .avatar-btn{
+    display:flex;flex-direction:column;align-items:center;gap:5px;
+    width:58px;border:none;background:none;flex:none;
+  }
+  .avatar-circle{
+    width:48px;height:48px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    color:#fff;font-weight:700;font-size:15px;
+    border:3px solid transparent;
+  }
+  .avatar-btn.selected .avatar-circle{border-color:var(--ink);box-shadow:0 0 0 2px var(--card);}
+  .avatar-name{font-size:11px;color:var(--ink-soft);font-weight:600;max-width:58px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .avatar-btn.selected .avatar-name{color:var(--ink);}
+
+  .student-strip{
+    flex:1;display:flex;align-items:center;gap:10px;overflow-x:auto;min-width:0;
+    padding:5px 6px;margin:0 -6px;
+  }
+  .student-chip{
+    flex:none;width:38px;height:38px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    color:#fff;font-weight:700;font-size:12.5px;border:none;
+    box-shadow:0 0 0 2px rgba(255,255,255,.45);
+  }
+  .student-chip.selected{box-shadow:0 0 0 3px #fff;transform:scale(1.04);}
+  .icon-btn{
+    flex:none;width:38px;height:38px;border-radius:50%;
+    border:1px solid var(--border);background:var(--card);
+    display:flex;align-items:center;justify-content:center;
+    font-size:16px;color:var(--ink);cursor:pointer;
+  }
+  .icon-btn:active{background:var(--bg);}
+  .topbar-band .icon-btn{
+    background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.4);color:#fff;
+  }
+  .topbar-band .icon-btn:active{background:rgba(255,255,255,.32);}
+  .topbar-band .font-scale-btn{
+    background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.4);color:#fff;
+  }
+  .topbar-band .font-scale-btn:active{background:rgba(255,255,255,.32);}
+
+  .view-switch{
+    display:flex;align-items:center;justify-content:center;position:relative;margin-top:10px;
+  }
+  .view-pill-group{display:flex;gap:8px;}
+  .view-pill{
+    border:1px solid var(--border);background:var(--bg);color:var(--ink-soft);
+    font-size:12.5px;font-weight:700;letter-spacing:.03em;
+    padding:9px 0;width:64px;border-radius:999px;
+  }
+  .view-pill.active{
+    background:var(--accent);border-color:var(--accent);color:#fff;
+  }
+  .view-pill:active{filter:brightness(.96);}
+
+  .font-scale-group{display:flex;gap:4px;flex:none;}
+  .font-scale-btn{
+    border:1px solid var(--border);background:var(--bg);color:var(--ink-soft);
+    font-weight:800;border-radius:8px;width:30px;height:30px;font-size:12px;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .font-scale-btn:active{background:var(--border);}
+  .font-scale-btn.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+
+  .search-bar{
+    max-height:0;opacity:0;overflow:hidden;margin-top:0;
+    transform:translateY(-6px);
+    transition:max-height .3s cubic-bezier(.2,.8,.3,1), opacity .22s ease,
+               margin-top .3s cubic-bezier(.2,.8,.3,1), transform .26s cubic-bezier(.2,.8,.3,1);
+  }
+  .search-bar.open{max-height:72vh;opacity:1;margin-top:8px;transform:translateY(0);}
+  .search-bar input{
+    width:100%;padding:10px 12px;font-size:14px;border:1px solid var(--border);
+    border-radius:10px;background:var(--card);color:var(--ink);
+  }
+  .search-results{margin-top:8px;display:flex;flex-direction:column;gap:8px;max-height:46vh;overflow-y:auto;}
+  .search-empty{color:var(--ink-soft);font-size:12.5px;text-align:center;padding:10px 4px;}
+  .search-result{
+    background:var(--card);border-radius:var(--radius-sm);box-shadow:var(--shadow);
+    padding:9px 11px;cursor:pointer;
+  }
+  .search-result .sr-top{display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--ink-soft);font-weight:700;margin-bottom:3px;}
+  .search-result .sr-avatar{width:16px;height:16px;border-radius:50%;flex:none;color:#fff;display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:700;}
+  .search-result .sr-title{font-weight:700;font-size:13.5px;word-break:break-word;}
+  .search-result .sr-notes{font-size:12px;color:var(--ink-soft);margin-top:2px;word-break:break-word;}
+  .search-result mark{background:#fff2a8;color:inherit;border-radius:2px;}
+
+  .nav-row{
+    display:flex;align-items:center;justify-content:center;position:relative;
+    margin-top:10px;gap:8px;
+  }
+  .nav-center{display:flex;align-items:center;gap:6px;}
+  .nav-btn{
+    flex:none;width:34px;height:34px;border-radius:50%;
+    border:none;background:var(--bg);color:var(--ink);
+    font-size:16px;display:flex;align-items:center;justify-content:center;
+  }
+  .nav-title{
+    text-align:center;font-weight:700;font-size:15.5px;
+    text-transform:capitalize;
+  }
+  .today-btn{
+    position:absolute;right:0;top:50%;transform:translateY(-50%);
+    border:1px solid var(--border);background:var(--card);
+    border-radius:999px;padding:7px 12px;font-size:12.5px;font-weight:600;
+    color:var(--accent);
+  }
+  .field-date-row{display:flex;gap:8px;align-items:stretch;}
+  .field-date-row input[type=date]{flex:1;min-width:0;}
+  .field-today-btn{
+    flex:none;border:1px solid var(--border);background:var(--bg);
+    border-radius:10px;padding:0 14px;font-size:13px;font-weight:700;
+    color:var(--accent);
+  }
+
+  /* ---------- Main scroll area ---------- */
+  .view-wrap{flex:1;min-height:0;overflow-y:auto;padding:12px;padding-bottom:90px;}
+
+  /* ---------- Day view ---------- */
+  .empty-state{
+    text-align:center;color:var(--ink-soft);padding:48px 16px;font-size:14px;
+  }
+  .empty-state .big{display:flex;justify-content:center;margin-bottom:8px;color:var(--ink-soft);opacity:.7;}
+  .event-card{
+    display:flex;gap:10px;background:var(--card);border-radius:var(--radius);
+    padding:12px;margin-bottom:10px;box-shadow:var(--shadow);
+    border-left:5px solid var(--accent);
+  }
+  .event-body{flex:1;min-width:0;}
+  .event-title{font-weight:700;font-size:15px;margin:0 0 2px;word-break:break-word;}
+  .event-sub{font-size:15.5px;color:var(--ink-soft);display:flex;flex-wrap:wrap;gap:6px;align-items:center;}
+  .pill{
+    display:inline-flex;align-items:center;gap:4px;background:var(--bg);
+    border-radius:999px;padding:2px 8px;font-size:11.5px;font-weight:600;
+  }
+  .pill .dot{width:7px;height:7px;border-radius:50%;}
+  .pill.time-pill{background:#eaf0ff;color:var(--accent);}
+  .pill.time-pill .time-num{font-size:1.2em;font-weight:800;margin-left:1px;}
+  .event-notes{font-size:15.5px;color:var(--ink-soft);margin-top:4px;}
+  .event-notes.comment-notes{color:var(--ink);font-weight:400;}
+
+  .day-block{
+    background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);
+    margin-bottom:14px;overflow:hidden;
+  }
+  .day-block-head{
+    display:flex;align-items:center;gap:8px;padding:12px 14px;
+    border-bottom:1px solid var(--border);flex-wrap:nowrap;
+  }
+  .day-block-avatar{
+    flex:none;width:30px;height:30px;border-radius:50%;color:#fff;
+    display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11.5px;
+  }
+  .day-block-name{
+    font-weight:700;font-size:14.5px;min-width:0;flex:0 1 auto;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+  .day-block-time{display:flex;gap:4px;flex:none;cursor:pointer;}
+  .day-block-count{
+    flex:none;margin-left:auto;background:var(--bg);color:var(--ink-soft);font-weight:700;font-size:11.5px;
+    border-radius:999px;padding:2px 9px;
+  }
+  .day-block-body{padding:4px 14px 6px;}
+  .day-row{padding:11px 0;border-bottom:1px solid var(--border);}
+  .day-row:last-child{border-bottom:none;}
+  .day-row-title{
+    margin:0 0 6px;font-weight:700;font-size:18px;display:flex;align-items:center;gap:8px;
+  }
+  .day-row-title .dot{width:9px;height:9px;border-radius:50%;flex:none;}
+
+  .day-section-label{
+    font-size:12px;font-weight:700;color:var(--ink-soft);
+    text-transform:uppercase;letter-spacing:.04em;margin:14px 2px 8px;
+  }
+  .day-section-label:first-child{margin-top:0;}
+
+  /* ---------- Week view ---------- */
+  .week-grid{
+    display:flex;flex-direction:column;gap:20px;
+  }
+  .period-block{
+    display:flex;flex-direction:column;gap:10px;
+    padding-bottom:16px;border-bottom:2px solid var(--border);
+  }
+  .period-block:last-child{border-bottom:none;padding-bottom:0;}
+  .week-col{
+    width:100%;
+    background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);
+    display:flex;flex-direction:column;
+  }
+  .week-col-head{
+    padding:10px 12px;border-bottom:1px solid var(--border);
+    display:flex;align-items:center;gap:6px;
+    border-radius:var(--radius) var(--radius) 0 0;
+    background:var(--card-head);
+  }
+  .week-col-head .date-col{
+    display:flex;flex-direction:row;align-items:center;gap:5px;flex:none;
+  }
+  .week-col-head .mo{font-size:10.5px;color:var(--ink-soft);font-weight:700;text-transform:uppercase;line-height:1.3;}
+  .week-col-head .wd{font-size:12px;color:var(--ink-soft);font-weight:700;text-transform:uppercase;}
+  .week-col-head .dn{font-size:16px;font-weight:700;}
+  .week-col-head.is-today .dn{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:26px;height:26px;border-radius:50%;background:var(--today-ring);color:#fff;
+  }
+  .week-col-body{padding:8px 10px 10px;display:flex;flex-direction:column;gap:6px;}
+  .mini-event{
+    border-left:3px solid var(--accent);border-bottom:1px solid var(--border);
+    padding:6px 8px;font-size:15px;
+  }
+  .mini-event:last-child{border-bottom:none;}
+  .mini-event .t{font-weight:700;display:block;word-break:break-word;}
+  .mini-event .t .dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px;flex:none;vertical-align:middle;}
+  .mini-event .s{color:var(--ink-soft);font-size:13.5px;}
+  .mini-chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;}
+  .mini-chips .pill{font-size:10px;padding:1px 6px;}
+  .mini-empty{color:var(--ink-soft);font-size:11.5px;text-align:center;padding:14px 4px;}
+  .mini-group{margin-bottom:8px;}
+  .mini-group:last-child{margin-bottom:0;}
+  .mini-group-head{
+    display:flex;align-items:center;gap:6px;margin-bottom:5px;flex-wrap:nowrap;
+    font-size:11px;font-weight:700;color:var(--ink-soft);
+  }
+  .mini-avatar{
+    flex:none;width:18px;height:18px;border-radius:50%;color:#fff;
+    display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;
+  }
+  .mini-group-time{display:flex;gap:4px;flex:none;cursor:pointer;}
+  .mini-group-time .pill{font-size:10px;padding:1px 6px;}
+
+  /* ---------- FAB ---------- */
+  .fab{
+    position:fixed;right:18px;bottom:calc(18px + env(safe-area-inset-bottom));
+    width:56px;height:56px;border-radius:50%;background:var(--accent);
+    color:#fff;font-size:28px;border:none;box-shadow:0 6px 16px rgba(79,109,245,.45);
+    display:flex;align-items:center;justify-content:center;z-index:25;line-height:0;
+  }
+  .fab:active{transform:scale(.94);}
+
+  /* ---------- Modal ---------- */
+  .overlay{
+    position:fixed;inset:0;background:rgba(17,20,28,.45);
+    display:flex;align-items:flex-end;justify-content:center;
+    z-index:50;opacity:0;pointer-events:none;
+    transition:opacity .22s ease, backdrop-filter .22s ease;
+    backdrop-filter:blur(0px);
+  }
+  .overlay.open{opacity:1;pointer-events:auto;backdrop-filter:blur(3px);}
+  .sheet{
+    background:var(--card);width:100%;max-width:480px;
+    border-radius:18px 18px 0 0;max-height:92vh;display:flex;flex-direction:column;
+    transform:translateY(28px);transition:transform .3s cubic-bezier(.2,.9,.3,1.12);
+    padding-bottom:env(safe-area-inset-bottom);
+  }
+  .overlay.open .sheet{transform:translateY(0);}
+  .sheet-handle{width:40px;height:4px;background:var(--border);border-radius:99px;margin:10px auto 2px;}
+  .overlay-center{align-items:center;padding:0 16px;}
+  .overlay-center .sheet{
+    border-radius:18px;transform:scale(.88) translateY(10px);opacity:0;
+    transition:transform .28s cubic-bezier(.2,.9,.3,1.35), opacity .2s ease;
+  }
+  .overlay-center.open .sheet{transform:scale(1) translateY(0);opacity:1;}
+  .overlay-center .sheet-handle{display:none;}
+  .sheet-head{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:10px 16px 6px;
+  }
+  .sheet-head h2{font-size:17px;margin:0;}
+  .sheet-close{border:none;background:none;color:var(--ink-soft);padding:4px 6px;display:flex;align-items:center;justify-content:center;}
+  .sheet-body{overflow-y:auto;padding:4px 16px 18px;}
+  .tabnav{margin:4px 16px 2px;}
+  .tabnav button{padding:10px 4px;font-size:13px;}
+
+  .field{margin-bottom:14px;}
+  .field label{display:block;font-size:12.5px;font-weight:700;color:var(--ink-soft);margin-bottom:6px;}
+  .field input[type=text], .field input[type=date], .field input[type=time], .field select, .field textarea{
+    width:100%;border:1px solid var(--border);border-radius:10px;
+    padding:11px 12px;font-size:15px;background:var(--bg);color:var(--ink);
+  }
+  .field textarea{resize:vertical;min-height:56px;}
+  .row2{display:flex;gap:10px;}
+  .row2 > *{flex:1;min-width:0;}
+  .seg{display:flex;border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+  .seg button{
+    flex:1;border:none;background:var(--bg);padding:10px 4px;font-size:12.5px;font-weight:600;
+    color:var(--ink-soft);border-right:1px solid var(--border);
+  }
+  .seg button:last-child{border-right:none;}
+  .seg button.active{background:var(--accent);color:#fff;}
+  .weekday-picker{display:flex;gap:6px;}
+  .weekday-picker button{
+    flex:1;padding:10px 0;border-radius:10px;border:1px solid var(--border);
+    background:var(--bg);font-size:12.5px;font-weight:700;color:var(--ink-soft);
+  }
+  .weekday-picker button.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+  .color-row{display:flex;gap:8px;flex-wrap:wrap;}
+  .swatch{
+    width:30px;height:30px;border-radius:50%;border:2px solid transparent;
+  }
+  .swatch.active{border-color:var(--ink);}
+  .hint{font-size:11.5px;color:var(--ink-soft);margin-top:4px;}
+  .disabled-field .color-row{opacity:.35;pointer-events:none;}
+
+  .btn-row{display:flex;gap:10px;margin-top:4px;}
+  .btn{
+    flex:1;padding:13px;border-radius:12px;border:none;font-size:15px;font-weight:700;
+  }
+  .btn-primary{background:var(--accent);color:#fff;}
+  .btn-ghost{background:var(--bg);color:var(--ink);}
+  .btn-danger{background:#fde8e7;color:var(--danger);}
+  .btn:active{filter:brightness(.95);}
+
+  .student-list{display:flex;flex-direction:column;gap:8px;margin-bottom:14px;}
+  .student-row{
+    display:flex;align-items:center;gap:10px;background:var(--bg);
+    border-radius:12px;padding:9px 10px;
+  }
+  .student-row .dot{width:16px;height:16px;border-radius:50%;flex:none;}
+  .student-row .name{flex:1;font-weight:600;font-size:14.5px;}
+  .student-row .icon-mini{border:none;background:none;color:var(--ink-soft);padding:6px;display:flex;align-items:center;justify-content:center;border-radius:8px;}
+  .student-row .icon-mini:active{background:var(--border);}
+  .student-row .icon-mini.del{color:var(--danger);}
+
+  /* ---------- Animaciones y feedback táctil ---------- */
+  .view-pill, .font-scale-btn, .icon-btn, .nav-btn, .today-btn, .btn,
+  .student-chip, .fab, .field-today-btn, .seg button, .weekday-picker button,
+  .sheet-close, .icon-mini, .swatch{
+    transition:transform .15s cubic-bezier(.2,.8,.3,1), background-color .22s ease,
+               color .22s ease, box-shadow .22s ease, border-color .22s ease, filter .18s ease;
+  }
+  .view-pill:active, .font-scale-btn:active, .icon-btn:active, .nav-btn:active,
+  .today-btn:active, .field-today-btn:active, .seg button:active,
+  .weekday-picker button:active, .sheet-close:active, .icon-mini:active, .swatch:active{
+    transform:scale(.88);
+  }
+  .btn:active{transform:scale(.97);}
+  .student-chip:active{transform:scale(.9);}
+  .fab{transition:transform .18s cubic-bezier(.2,.9,.3,1.3), box-shadow .22s ease;}
+  .fab:active{transform:scale(.88) rotate(90deg);}
+  .view-pill.active{box-shadow:0 3px 10px rgba(79,109,245,.4);}
+  .mini-event, .day-row, .search-result{transition:transform .14s ease, background-color .2s ease;}
+  .mini-event:active, .day-row:active, .search-result:active{transform:scale(.985);}
+
+  @keyframes viewFade{from{opacity:0;} to{opacity:1;}}
+  .view-wrap.view-enter{animation:viewFade .28s ease;}
+
+  @keyframes cardRise{from{opacity:0;transform:translateY(12px);} to{opacity:1;transform:none;}}
+  .day-block{animation:cardRise .34s cubic-bezier(.2,.8,.3,1) both;}
+  .day-block:nth-child(2){animation-delay:.06s;}
+  .day-block:nth-child(3){animation-delay:.12s;}
+  .day-block:nth-child(4){animation-delay:.18s;}
+  .day-block:nth-child(n+5){animation-delay:.22s;}
+
+  @keyframes cardFade{from{opacity:0;} to{opacity:1;}}
+  .week-col{animation:cardFade .32s ease both;}
+
+  @keyframes resultIn{from{opacity:0;transform:translateY(-6px);} to{opacity:1;transform:none;}}
+  .search-result{animation:resultIn .22s ease both;}
+
+  @media (prefers-reduced-motion:reduce){
+    *{animation-duration:.01ms !important;transition-duration:.01ms !important;}
+  }
+
+  ::-webkit-scrollbar{width:0;height:0;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-band">
+    <div class="topbar-row">
+      <div class="student-strip" id="studentStrip"></div>
+      <div class="font-scale-group">
+        <button type="button" class="font-scale-btn" id="btnFontDown" title="Reducir tamaño de texto">A-</button>
+        <button type="button" class="font-scale-btn" id="btnFontUp" title="Aumentar tamaño de texto">A+</button>
+      </div>
+      <button class="icon-btn" id="btnStudents" title="Estudiantes"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20.5c0-4.1 3.6-6.5 8-6.5s8 2.4 8 6.5"/></svg></button>
+    </div>
+  </div>
+  <div class="topbar-main">
+  <div class="view-switch" id="viewSwitch">
+    <div class="view-pill-group">
+      <button type="button" class="view-pill" data-view="day">DÍA</button>
+      <button type="button" class="view-pill active" data-view="week">SEM</button>
+    </div>
+    <div class="font-scale-group" style="position:absolute;right:0;top:50%;transform:translateY(-50%);">
+      <button type="button" class="font-scale-btn" id="btnSearchToggle" title="Buscar"></button>
+    </div>
+  </div>
+  <div class="search-bar" id="searchBar">
+    <input type="text" id="searchInput" placeholder="Buscar en eventos, horarios y comentarios…">
+    <div class="search-results" id="searchResults"></div>
+  </div>
+  <div class="nav-row">
+    <div class="nav-center">
+      <button class="nav-btn" id="btnPrev">‹</button>
+      <div class="nav-title" id="navTitle">—</div>
+      <button class="nav-btn" id="btnNext">›</button>
+    </div>
+    <button class="today-btn" id="btnToday">Hoy</button>
+  </div>
+  </div>
+</div>
+
+<div class="view-wrap" id="viewWrap"></div>
+
+<button class="fab" id="btnAdd">+</button>
+
+<!-- Event modal -->
+<div class="overlay overlay-center" id="eventOverlay">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head">
+      <h2 id="eventModalTitle">Nuevo evento</h2>
+      <button class="sheet-close" id="eventClose"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5l14 14"/><path d="M19 5L5 19"/></svg></button>
+    </div>
+    <div class="seg tabnav" id="eventTabNav">
+      <button type="button" data-tab="horario">Horario</button>
+      <button type="button" data-tab="comentario">Comentario</button>
+      <button type="button" data-tab="evento" class="active">Evento</button>
+    </div>
+    <div class="sheet-body">
+
+      <div class="tab-panel" data-panel="evento">
+        <div class="field">
+          <label>Título (opcional si solo es un comentario)</label>
+          <input type="text" id="f_title" placeholder="Ej. Clase de piano">
+        </div>
+        <div class="field">
+          <label>Estudiante</label>
+          <select id="f_student"></select>
+        </div>
+        <div class="field">
+          <label>Tipo de evento</label>
+          <div class="seg" id="f_kindSeg">
+            <button type="button" data-kind="single" class="active">Un día</button>
+            <button type="button" data-kind="daily">Rango de días</button>
+            <button type="button" data-kind="weekly">Cadena semanal</button>
+          </div>
+        </div>
+
+        <div class="field" id="field_singleDate">
+          <label>Fecha</label>
+          <div class="field-date-row">
+            <input type="date" id="f_date">
+            <button type="button" class="field-today-btn" data-today-for="f_date">Hoy</button>
+          </div>
+        </div>
+
+        <div id="field_range" style="display:none;">
+          <div class="field">
+            <label>Desde</label>
+            <input type="date" id="f_rangeStart">
+          </div>
+          <div class="field">
+            <label>Hasta</label>
+            <input type="date" id="f_rangeEnd">
+          </div>
+        </div>
+
+        <div class="field" id="field_weekday" style="display:none;">
+          <label>Días de la semana (puedes elegir varios)</label>
+          <div class="weekday-picker" id="f_weekdayPicker">
+            <button type="button" data-wd="1">L</button>
+            <button type="button" data-wd="2">M</button>
+            <button type="button" data-wd="3">M</button>
+            <button type="button" data-wd="4">J</button>
+            <button type="button" data-wd="5">V</button>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="tab-panel" data-panel="horario" style="display:none;">
+        <div class="field">
+          <label>Estudiante</label>
+          <select id="f_student2"></select>
+        </div>
+        <div class="field">
+          <label>Fecha</label>
+          <div class="field-date-row">
+            <input type="date" id="f_dateH">
+            <button type="button" class="field-today-btn" data-today-for="f_dateH">Hoy</button>
+          </div>
+        </div>
+        <div class="field">
+          <label>Hora de entrada</label>
+          <input type="time" id="f_start">
+        </div>
+        <div class="field">
+          <label>Hora de salida</label>
+          <input type="time" id="f_end">
+        </div>
+        <p class="hint">Deja los campos vacíos si el evento no tiene horario fijo (todo el día).</p>
+      </div>
+
+      <div class="tab-panel" data-panel="comentario" style="display:none;">
+        <div class="field">
+          <label>Estudiante</label>
+          <select id="f_student3"></select>
+        </div>
+        <div class="field">
+          <label>Fecha</label>
+          <div class="field-date-row">
+            <input type="date" id="f_dateC">
+            <button type="button" class="field-today-btn" data-today-for="f_dateC">Hoy</button>
+          </div>
+        </div>
+        <div class="field">
+          <label>Comentario (opcional)</label>
+          <textarea id="f_notes" placeholder="Detalles adicionales" rows="6"></textarea>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-ghost" id="btnCancelEvent">Cancelar</button>
+        <button class="btn btn-danger" id="btnDeleteEvent" style="display:none;">Eliminar</button>
+        <button class="btn btn-primary" id="btnSaveEvent">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Delete-choice modal (recurring events) -->
+<div class="overlay" id="deleteChoiceOverlay">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head">
+      <h2>Eliminar evento recurrente</h2>
+      <button class="sheet-close" id="deleteChoiceClose"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5l14 14"/><path d="M19 5L5 19"/></svg></button>
+    </div>
+    <div class="sheet-body">
+      <p class="hint" id="deleteChoiceText" style="font-size:13.5px;margin:0 0 14px;"></p>
+      <div class="btn-row" style="flex-direction:column;">
+        <button class="btn btn-ghost" id="btnDeleteOnlyThis" style="margin-bottom:10px;width:100%;">Eliminar solo este día</button>
+        <button class="btn btn-danger" id="btnDeleteWholeChain" style="margin-bottom:10px;width:100%;">Eliminar toda la cadena</button>
+        <button class="btn btn-ghost" id="btnDeleteCancel" style="width:100%;">Cancelar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Students modal -->
+<div class="overlay" id="studentsOverlay">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head">
+      <h2>Estudiantes</h2>
+      <button class="sheet-close" id="studentsClose"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5l14 14"/><path d="M19 5L5 19"/></svg></button>
+    </div>
+    <div class="sheet-body">
+      <div class="student-list" id="studentList"></div>
+      <div class="field">
+        <label id="studentFormLabel">Nombre del nuevo estudiante</label>
+        <input type="text" id="newStudentName" placeholder="Ej. Sofía">
+      </div>
+      <div class="field">
+        <label>Color</label>
+        <div class="color-row" id="newStudentColorRow"></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-ghost" id="btnCancelEditStudent" style="display:none;">Cancelar</button>
+        <button class="btn btn-primary" id="btnAddStudent">Agregar estudiante</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Custom alert/confirm dialog (replaces browser alert()/confirm()) -->
+<div class="overlay overlay-center" id="customDialogOverlay" style="z-index:90;">
+  <div class="sheet" style="max-width:360px;">
+    <div class="sheet-handle"></div>
+    <div class="sheet-body" style="padding-top:16px;">
+      <p id="customDialogMessage" style="font-size:14.5px;line-height:1.5;margin:0 0 18px;white-space:pre-line;"></p>
+      <div class="btn-row" style="flex-direction:column;">
+        <button class="btn btn-primary" id="customDialogOk" style="width:100%;">Aceptar</button>
+        <button class="btn btn-ghost" id="customDialogCancel" style="width:100%;margin-top:10px;display:none;">Cancelar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ============ Storage ============ */
+  var STORAGE_KEY = "calendarioEscolarData_v1";
+  var PALETTE = ["#4f6df5","#ef6a6a","#f5a623","#2bb673","#9b59e0","#17a2b8","#e5579f","#6d6875"];
+  var ALL_COLOR = "#3a3d46";
+  var WEEK_PASTEL = ["#ffe1e6","#d7f0f2","#ffe3e3","#e7f6d8","#f2dafb","#ffe9d6","#d9e8fb","#e8e4d8","#d8f3e6","#fbdff0","#fff6cf","#e1dffb"];
+  var WEEK_PASTEL_EPOCH = new Date(2020,0,6); // lunes de referencia
+  function weekPastelColor(weekStart){
+    var diffDays = Math.round((weekStart - WEEK_PASTEL_EPOCH) / 86400000);
+    var weekNum = Math.floor(diffDays / 7);
+    var idx = ((weekNum % WEEK_PASTEL.length) + WEEK_PASTEL.length) % WEEK_PASTEL.length;
+    return WEEK_PASTEL[idx];
+  }
+  function weekNumberOf(date){
+    return Math.floor(Math.round((startOfWeekMonday(date) - WEEK_PASTEL_EPOCH) / 86400000) / 7);
+  }
+  function hexToRgb(hex){
+    hex = hex.replace("#","");
+    return [parseInt(hex.substring(0,2),16), parseInt(hex.substring(2,4),16), parseInt(hex.substring(4,6),16)];
+  }
+  function rgbToHsl(r,g,b){
+    r/=255; g/=255; b/=255;
+    var max=Math.max(r,g,b), min=Math.min(r,g,b), h, s, l=(max+min)/2;
+    if(max===min){ h=0; s=0; }
+    else{
+      var d=max-min;
+      s = l>0.5 ? d/(2-max-min) : d/(max+min);
+      if(max===r) h=(g-b)/d+(g<b?6:0);
+      else if(max===g) h=(b-r)/d+2;
+      else h=(r-g)/d+4;
+      h/=6;
+    }
+    return [h*360, s*100, l*100];
+  }
+  function hslToHex(h,s,l){
+    h/=360; s/=100; l/=100;
+    var r,g,b;
+    if(s===0){ r=g=b=l; }
+    else{
+      var hue2rgb = function(p,q,t){
+        if(t<0) t+=1; if(t>1) t-=1;
+        if(t<1/6) return p+(q-p)*6*t;
+        if(t<1/2) return q;
+        if(t<2/3) return p+(q-p)*(2/3-t)*6;
+        return p;
+      };
+      var q = l<0.5 ? l*(1+s) : l+s-l*s;
+      var p = 2*l-q;
+      r = hue2rgb(p,q,h+1/3); g = hue2rgb(p,q,h); b = hue2rgb(p,q,h-1/3);
+    }
+    function toHex(x){ var h2=Math.round(x*255).toString(16); return h2.length===1 ? "0"+h2 : h2; }
+    return "#"+toHex(r)+toHex(g)+toHex(b);
+  }
+  function saturateHex(hex, amount){
+    var rgb = hexToRgb(hex);
+    var hsl = rgbToHsl(rgb[0], rgb[1], rgb[2]);
+    hsl[1] = Math.min(100, hsl[1] + amount);
+    return hslToHex(hsl[0], hsl[1], hsl[2]);
+  }
+  /* Fondo de la app: el tono va cambiando de forma continua según el scroll / la semana visible */
+  function applyBgPosition(pos){
+    var hue = ((pos * 150) % 360 + 360) % 360;
+    document.body.style.backgroundColor = "hsl(" + hue.toFixed(1) + ",48%,78%)";
+  }
+  function updateScrollBackground(){
+    if(state.view!=="week" || !contState.blocks.length){
+      applyBgPosition(weekNumberOf(state.currentDate));
+      return;
+    }
+    var refY = viewWrap.getBoundingClientRect().top;
+    var cur = contState.blocks[0];
+    var curRect = cur.el.getBoundingClientRect();
+    for(var i=0;i<contState.blocks.length;i++){
+      var r = contState.blocks[i].el.getBoundingClientRect();
+      if(r.top <= refY){ cur = contState.blocks[i]; curRect = r; }
+      else break;
+    }
+    var h = curRect.height || 1;
+    var frac = Math.min(1, Math.max(0, (refY - curRect.top) / h));
+    applyBgPosition(weekNumberOf(cur.start) + frac);
+  }
+  function initials(name){ return (name||"?").trim().slice(0,2).toUpperCase(); }
+  function allLabel(){ return DATA.students.length===2 ? "Ambos" : "Todos"; }
+  function showAllChip(){ return false; }
+
+  /* ============ Diálogos propios (reemplazan alert()/confirm() del navegador) ============ */
+  function showAppAlert(message, onClose){
+    var overlay = document.getElementById("customDialogOverlay");
+    var msgEl = document.getElementById("customDialogMessage");
+    var okBtn = document.getElementById("customDialogOk");
+    var cancelBtn = document.getElementById("customDialogCancel");
+    msgEl.textContent = message;
+    okBtn.textContent = "Aceptar";
+    cancelBtn.style.display = "none";
+    function cleanup(){
+      overlay.classList.remove("open");
+      okBtn.removeEventListener("click", onOk);
+      overlay.removeEventListener("click", onOverlayClick);
+    }
+    function onOk(){ cleanup(); if(onClose) onClose(); }
+    function onOverlayClick(e){ if(e.target===overlay){ cleanup(); if(onClose) onClose(); } }
+    okBtn.addEventListener("click", onOk);
+    overlay.addEventListener("click", onOverlayClick);
+    overlay.classList.add("open");
+  }
+  function showAppConfirm(message, onYes, onNo){
+    var overlay = document.getElementById("customDialogOverlay");
+    var msgEl = document.getElementById("customDialogMessage");
+    var okBtn = document.getElementById("customDialogOk");
+    var cancelBtn = document.getElementById("customDialogCancel");
+    msgEl.textContent = message;
+    okBtn.textContent = "Aceptar";
+    cancelBtn.style.display = "block";
+    function cleanup(){
+      overlay.classList.remove("open");
+      okBtn.removeEventListener("click", onOk);
+      cancelBtn.removeEventListener("click", onCancel);
+      overlay.removeEventListener("click", onOverlayClick);
+    }
+    function onOk(){ cleanup(); if(onYes) onYes(); }
+    function onCancel(){ cleanup(); if(onNo) onNo(); }
+    function onOverlayClick(e){ if(e.target===overlay){ cleanup(); if(onNo) onNo(); } }
+    okBtn.addEventListener("click", onOk);
+    cancelBtn.addEventListener("click", onCancel);
+    overlay.addEventListener("click", onOverlayClick);
+    overlay.classList.add("open");
+  }
+
+  /* ============ Inline SVG icons (no emoji) ============ */
+  var ICON_PERSON = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20.5c0-4.1 3.6-6.5 8-6.5s8 2.4 8 6.5"/></svg>';
+  var ICON_GROUP = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;flex:none;"><circle cx="9" cy="8" r="3.2"/><circle cx="17" cy="9.2" r="2.6"/><path d="M3 20.5c0-3.6 2.9-6.2 6-6.2s6 2.6 6 6.2"/><path d="M14.3 14.6c2.5.5 4.2 2.5 4.2 5.4"/></svg>';
+  var ICON_CALENDAR = '<svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M3 10h18"/><path d="M8 3v4"/><path d="M16 3v4"/></svg>';
+  var ICON_REPEAT = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;flex:none;"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>';
+  var ICON_TRASH = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>';
+  var ICON_EDIT = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
+  var ICON_CLOSE = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5l14 14"/><path d="M19 5L5 19"/></svg>';
+  var ICON_SEARCH = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>';
+
+  /* ============ Accesibilidad: escala de tamaño de texto/UI ============ */
+  var FONT_SCALE_KEY = "calendarioEscolarFontScale_v1";
+  var FONT_SCALE_MIN = 0.7;
+  var FONT_SCALE_MAX = 1.5;
+  var FONT_SCALE_STEP = 0.1;
+  function loadFontScale(){
+    try{
+      var raw = localStorage.getItem(FONT_SCALE_KEY);
+      if(raw){ var n = parseFloat(raw); if(!isNaN(n)) return n; }
+    }catch(e){}
+    return 1;
+  }
+  function saveFontScale(scale){
+    try{ localStorage.setItem(FONT_SCALE_KEY, String(scale)); }catch(e){}
+  }
+  var currentFontScale = loadFontScale();
+  function applyFontScale(scale){
+    scale = Math.max(FONT_SCALE_MIN, Math.min(FONT_SCALE_MAX, scale));
+    currentFontScale = scale;
+    document.documentElement.style.zoom = scale;
+    saveFontScale(scale);
+  }
+
+  function loadData(){
+    try{
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if(raw) return JSON.parse(raw);
+    }catch(e){}
+    return { students: [], events: [] };
+  }
+  function saveData(){
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(DATA)); }catch(e){}
+  }
+  var DATA = loadData();
+
+  function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,8); }
+
+  /* ============ Date helpers ============ */
+  var WD_NAMES = ["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"];
+  var WD_FULL = ["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
+  var MONTH_NAMES = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+
+  function todayDate(){ var d=new Date(); d.setHours(0,0,0,0); return d; }
+  function toYMD(d){
+    var y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,"0"), day=String(d.getDate()).padStart(2,"0");
+    return y+"-"+m+"-"+day;
+  }
+  function fromYMD(s){
+    var p=s.split("-"); return new Date(parseInt(p[0],10), parseInt(p[1],10)-1, parseInt(p[2],10));
+  }
+  function addDays(d,n){ var r=new Date(d); r.setDate(r.getDate()+n); return r; }
+  function sameDay(a,b){ return toYMD(a)===toYMD(b); }
+  function startOfWeekMonday(d){
+    var r=new Date(d); var wd=r.getDay(); var diff = (wd===0? -6 : 1-wd); r.setDate(r.getDate()+diff); return r;
+  }
+  /* ============ App state ============ */
+  var state = {
+    view: "week",
+    currentDate: todayDate(),
+    studentFilter: "all"
+  };
+
+  /* ============ Student helpers ============ */
+  function getStudent(id){ return DATA.students.find(function(s){return s.id===id;}); }
+  function ensureDefaultStudent(){
+    if(DATA.students.length===0){
+      DATA.students.push({id: uid(), name:"General", color: PALETTE[0]});
+      saveData();
+    }
+    if(Array.isArray(state.studentFilter)){
+      state.studentFilter = state.studentFilter.filter(function(id){ return !!getStudent(id); });
+      if(state.studentFilter.length===0) state.studentFilter = "all";
+    }
+  }
+  function isStudentVisible(studentId){
+    if(studentId==="all") return true; // events for "Todos" always show, whatever the filter
+    if(state.studentFilter==="all") return true;
+    return state.studentFilter.indexOf(studentId)!==-1;
+  }
+  function visibleStudentIds(){
+    return state.studentFilter==="all" ? DATA.students.map(function(s){return s.id;}) : state.studentFilter.slice();
+  }
+  // Expands "Todos"/"Ambos" events into one occurrence per currently visible student,
+  // so they display individually under each student instead of a shared group.
+  function expandForStudents(evs){
+    var ids = visibleStudentIds();
+    var out = [];
+    evs.forEach(function(ev){
+      if(ev.studentId==="all"){
+        ids.forEach(function(sid){ out.push({ev:ev, sid:sid}); });
+      }else{
+        out.push({ev:ev, sid:ev.studentId});
+      }
+    });
+    return out;
+  }
+  // true when the current filter can show events from more than one student at once
+  function isMultiStudentView(){
+    if(state.studentFilter==="all") return DATA.students.length>1;
+    return state.studentFilter.length>1;
+  }
+
+  /* ============ Event occurrence logic ============ */
+  function eventWeekday(dateObj){ return dateObj.getDay(); } // 0..6
+  function isSchoolDay(dateObj){ var wd=dateObj.getDay(); return wd>=1 && wd<=5; }
+
+  function eventOccursOn(ev, dateObj){
+    var ymd = toYMD(dateObj);
+    if(ev.kind==="single"){
+      return ev.date===ymd;
+    }
+    if((ev.excludedDates||[]).indexOf(ymd)!==-1) return false;
+    if(ev.kind==="daily"){
+      if(!isSchoolDay(dateObj)) return false;
+      return ymd>=ev.rangeStart && ymd<=ev.rangeEnd;
+    }
+    if(ev.kind==="weekly"){
+      var wds = ev.weekdays || (ev.weekday!=null ? [ev.weekday] : []);
+      if(wds.indexOf(eventWeekday(dateObj))===-1) return false;
+      return ymd>=ev.rangeStart && ymd<=ev.rangeEnd;
+    }
+    return false;
+  }
+
+  function eventsForDate(dateObj){
+    var ymd = toYMD(dateObj);
+    return DATA.events.filter(function(ev){
+      if(!isStudentVisible(ev.studentId)) return false;
+      return eventOccursOn(ev, dateObj);
+    }).sort(function(a,b){
+      var ta = a.start || "99:99", tb = b.start || "99:99";
+      return ta.localeCompare(tb);
+    });
+  }
+
+  function anyEventsForDate(dateObj){
+    var ymd=dateObj;
+    return DATA.events.some(function(ev){
+      if(!isStudentVisible(ev.studentId)) return false;
+      return eventOccursOn(ev, dateObj);
+    });
+  }
+
+  /* ============ Rendering: top controls ============ */
+  var studentStrip = document.getElementById("studentStrip");
+  var navTitle = document.getElementById("navTitle");
+
+  function setView(v){
+    state.view = v;
+    document.querySelectorAll(".view-pill").forEach(function(b){
+      b.classList.toggle("active", b.getAttribute("data-view")===v);
+    });
+    renderWithTransition();
+  }
+  document.querySelectorAll(".view-pill").forEach(function(b){
+    b.addEventListener("click", function(){ setView(b.getAttribute("data-view")); });
+  });
+
+  function renderStudentSelect(){
+    var entries = (showAllChip() ? [{id:"all", name:allLabel(), color:"#c3c8d4", icon:ICON_GROUP}] : []).concat(DATA.students);
+    studentStrip.innerHTML = entries.map(function(s){
+      var selected = (s.id==="all") ? (state.studentFilter==="all") : (state.studentFilter==="all" ? !showAllChip() : state.studentFilter.indexOf(s.id)!==-1);
+      var inner = s.icon ? s.icon : initials(s.name);
+      return '<button type="button" class="student-chip'+(selected?' selected':'')+'" style="background:'+s.color+'" data-id="'+s.id+'" title="'+escapeHtml(s.name)+'">'+inner+'</button>';
+    }).join("");
+    studentStrip.querySelectorAll(".student-chip").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        var id = btn.getAttribute("data-id");
+        if(id==="all"){
+          state.studentFilter = "all";
+        }else{
+          var currentIds = (state.studentFilter==="all") ? [] : state.studentFilter.slice();
+          var idx = currentIds.indexOf(id);
+          if(idx===-1) currentIds.push(id); else currentIds.splice(idx,1);
+          state.studentFilter = currentIds.length ? currentIds : "all";
+        }
+        render();
+      });
+    });
+  }
+
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, function(c){
+      return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
+    });
+  }
+  // Display-only label for compact cards (week/month): falls back to a
+  // truncated comment when the entry has no title, without changing stored data.
+  function miniDisplayLabel(ev){
+    if(ev.title) return escapeHtml(ev.title);
+    if(ev.notes) return escapeHtml(ev.notes.length>40 ? ev.notes.slice(0,40)+"…" : ev.notes);
+    return "";
+  }
+
+  function titleForPeriod(periodStart){
+    var mon = periodStart, fri = addDays(mon,4);
+    if(mon.getMonth()===fri.getMonth()){
+      return mon.getDate()+" – "+fri.getDate()+" de "+MONTH_NAMES[mon.getMonth()];
+    }
+    return mon.getDate()+" "+MONTH_NAMES[mon.getMonth()].slice(0,3)+" – "+fri.getDate()+" "+MONTH_NAMES[fri.getMonth()].slice(0,3);
+  }
+
+  function renderNavTitle(){
+    var d = state.currentDate;
+    var text;
+    if(state.view==="day"){
+      text = WD_FULL[d.getDay()] + " " + d.getDate() + " de " + MONTH_NAMES[d.getMonth()];
+    }else{
+      text = titleForPeriod(startOfWeekMonday(d));
+    }
+    navTitle.style.transition = "none";
+    navTitle.style.transform = "translateX(0)";
+    navTitle.style.opacity = "1";
+    navTitle.textContent = text;
+  }
+
+  function updateNavTitleAnimated(newText, dir){
+    if(navTitle.textContent === newText) return;
+    navTitle.style.transition = "none";
+    navTitle.style.transform = "translateX(" + (dir>0 ? "46px" : "-46px") + ")";
+    navTitle.style.opacity = "0";
+    navTitle.textContent = newText;
+    /* force reflow so the transition below animates from the state above */
+    void navTitle.offsetWidth;
+    requestAnimationFrame(function(){
+      navTitle.style.transition = "transform .32s cubic-bezier(.22,.9,.3,1), opacity .28s ease";
+      navTitle.style.transform = "translateX(0)";
+      navTitle.style.opacity = "1";
+    });
+  }
+
+  /* ============ Rendering: views ============ */
+  var viewWrap = document.getElementById("viewWrap");
+  var topbarMain = document.querySelector(".topbar-main");
+  var topbarBand = document.querySelector(".topbar-band");
+  function applyHeaderWeekColor(){
+    var base = weekPastelColor(startOfWeekMonday(state.currentDate));
+    topbarMain.style.background = saturateHex(base, 32);
+    var rgb = hexToRgb(base);
+    var hsl = rgbToHsl(rgb[0], rgb[1], rgb[2]);
+    var hue = hsl[0];
+    var c1 = hslToHex(((hue - 18) + 360) % 360, 62, 58);
+    var c2 = hslToHex(hue, 68, 54);
+    var c3 = hslToHex((hue + 18) % 360, 62, 58);
+    topbarBand.style.background = "linear-gradient(115deg,"+c1+" 0%,"+c2+" 48%,"+c3+" 100%)";
+  }
+
+  function timeLabel(ev){
+    if(ev.start && ev.end) return ev.start+" – "+ev.end;
+    if(ev.start) return ev.start;
+    return "";
+  }
+
+  function formatTime12h(t){
+    if(!t) return "";
+    var parts = t.split(":");
+    var h = parseInt(parts[0],10);
+    var m = parts[1] || "00";
+    var ampm = h>=12 ? "pm" : "am";
+    var h12 = h % 12; if(h12===0) h12 = 12;
+    return h12+":"+m+" "+ampm;
+  }
+
+  function timeChipsHtml(ev){
+    if(!ev.start && !ev.end) return '<span class="pill time-pill">Todo el día</span>';
+    var out = '';
+    if(ev.start) out += '<span class="pill time-pill">Entrada <span class="time-num">'+formatTime12h(ev.start)+'</span></span>';
+    if(ev.end) out += '<span class="pill time-pill">Salida <span class="time-num">'+formatTime12h(ev.end)+'</span></span>';
+    return out;
+  }
+
+  // Groups events by studentId, preserving each group's internal (time-sorted) order.
+  // "Todos"/"Ambos" events are expanded so they appear individually under each student
+  // instead of forming their own shared group. Returns [{id, evs}] in student order.
+  function groupEventsByStudent(evs){
+    var byStudent = {};
+    var order = [];
+    expandForStudents(evs).forEach(function(pair){
+      var id = pair.sid;
+      if(!byStudent[id]){ byStudent[id] = []; order.push(id); }
+      byStudent[id].push(pair.ev);
+    });
+    var sortedIds = [];
+    DATA.students.forEach(function(s){ if(byStudent[s.id]) sortedIds.push(s.id); });
+    order.forEach(function(id){ if(sortedIds.indexOf(id)===-1) sortedIds.push(id); });
+    return sortedIds.map(function(id){ return {id:id, evs:byStudent[id]}; });
+  }
+  function groupLabel(studentId){
+    var st = getStudent(studentId);
+    var isAll = studentId==="all";
+    return {
+      isAll: isAll,
+      name: isAll ? allLabel() : (st ? st.name : "Estudiante"),
+      color: isAll ? ALL_COLOR : (st ? st.color : "#4f6df5"),
+      inner: isAll ? ICON_GROUP : initials(isAll ? allLabel() : (st ? st.name : "Estudiante"))
+    };
+  }
+
+  function renderDayView(){
+    var d = state.currentDate;
+    var evs = eventsForDate(d);
+    var html = "";
+    if(evs.length===0){
+      html = '<div class="empty-state"><span class="big">'+ICON_CALENDAR+'</span>Sin eventos para este día.</div>';
+    }else{
+      groupEventsByStudent(evs).forEach(function(g){
+        html += dayBlockHtml(g.id, g.evs, toYMD(d));
+      });
+    }
+    viewWrap.innerHTML = html;
+    bindEventCardClicks();
+  }
+  function eventColor(ev, contextStudentId){
+    if(ev.studentId==="all"){
+      var ctxSt = contextStudentId ? getStudent(contextStudentId) : null;
+      return ctxSt ? ctxSt.color : ALL_COLOR;
+    }
+    var st = getStudent(ev.studentId);
+    return st ? st.color : "#4f6df5";
+  }
+
+  function dayBlockHtml(studentId, evs, occDate){
+    var lbl = groupLabel(studentId);
+    var horarioEv = evs.find(function(ev){ return (ev.start || ev.end) && !ev.title && !ev.notes; });
+    var displayEvs = horarioEv ? evs.filter(function(ev){ return ev!==horarioEv; }) : evs;
+    displayEvs = displayEvs.slice().sort(function(a,b){
+      var ac = a.commentOnly ? 1 : 0, bc = b.commentOnly ? 1 : 0;
+      return ac - bc;
+    });
+    var rows = displayEvs.map(function(ev){ return eventRowHtml(ev, occDate, studentId); }).join("");
+    return '<div class="day-block">'
+      + '<div class="day-block-head">'
+      +   '<span class="day-block-avatar" style="background:'+lbl.color+'">'+lbl.inner+'</span>'
+      +   '<span class="day-block-name">'+escapeHtml(lbl.name)+'</span>'
+      +   (horarioEv ? '<span class="day-block-time" data-id="'+horarioEv.id+'" data-occ="'+occDate+'">'+timeChipsHtml(horarioEv)+'</span>' : '')
+      +   '<span class="day-block-count">'+displayEvs.length+'</span>'
+      + '</div>'
+      + (rows ? '<div class="day-block-body">'+rows+'</div>' : '')
+    + '</div>';
+  }
+
+  function eventRowHtml(ev, occDate, contextStudentId){
+    var color = eventColor(ev, contextStudentId);
+    var subHtml = (ev.kind==="weekly" ? '<span class="pill">'+ICON_REPEAT+(ev.weekdays || [ev.weekday]).map(function(wd){return WD_NAMES[wd];}).join(", ")+'</span>' : '')
+      + (ev.kind==="daily" ? '<span class="pill">'+ICON_REPEAT+'Rango</span>' : '');
+    return '<div class="day-row" data-id="'+ev.id+'" data-occ="'+occDate+'">'
+      +   (ev.title ? '<p class="day-row-title"><span class="dot" style="background:'+color+'"></span>'+escapeHtml(ev.title)+'</p>' : '')
+      +   (subHtml ? '<div class="event-sub">'+subHtml+'</div>' : '')
+      +   (ev.notes? '<div class="event-notes'+(ev.commentOnly ? ' comment-notes' : '')+'">'+escapeHtml(ev.notes)+'</div>' : '')
+    + '</div>';
+  }
+
+  function bindEventCardClicks(){
+    viewWrap.querySelectorAll(".day-row").forEach(function(row){
+      row.addEventListener("click", function(){
+        openEventModal(row.getAttribute("data-id"), null, row.getAttribute("data-occ"));
+      });
+    });
+    viewWrap.querySelectorAll(".day-block-time").forEach(function(chip){
+      chip.addEventListener("click", function(){
+        openEventModal(chip.getAttribute("data-id"), null, chip.getAttribute("data-occ"));
+      });
+    });
+  }
+
+  /* ============ Vista continua (semana / mes): scroll infinito ============ */
+  function weekDayCardHtml(d){
+    var isToday = sameDay(d, todayDate());
+    var evs = eventsForDate(d);
+    var headColor = weekPastelColor(startOfWeekMonday(d));
+    var html = '<div class="week-col">'
+      + '<div class="week-col-head'+(isToday?' is-today':'')+'" data-date="'+toYMD(d)+'" style="background:'+headColor+'">'
+      +   '<div class="date-col">'
+      +     '<div class="mo">'+MONTH_NAMES[d.getMonth()].slice(0,3)+'</div>'
+      +     '<div class="dn">'+d.getDate()+'</div>'
+      +   '</div>'
+      +   '<div class="wd">'+WD_FULL[d.getDay()].charAt(0).toUpperCase()+WD_FULL[d.getDay()].slice(1)+(isToday?' · Hoy':'')+'</div>'
+      + '</div>'
+      + '<div class="week-col-body">';
+    if(evs.length===0){
+      html += '<div class="mini-empty" data-empty-date="'+toYMD(d)+'">Sin eventos</div>';
+    }else{
+      var showGroupHeads = isMultiStudentView();
+      groupEventsByStudent(evs).forEach(function(g){
+        var lbl = groupLabel(g.id);
+        var horarioEv = g.evs.find(function(ev){ return (ev.start || ev.end) && !ev.title && !ev.notes; });
+        var displayEvs = horarioEv ? g.evs.filter(function(ev){ return ev!==horarioEv; }) : g.evs;
+        displayEvs = displayEvs.slice().sort(function(a,b){
+          var ac = a.commentOnly ? 1 : 0, bc = b.commentOnly ? 1 : 0;
+          return ac - bc;
+        });
+        var showHead = showGroupHeads || lbl.isAll || !!horarioEv;
+        html += '<div class="mini-group">';
+        if(showHead){
+          html += '<div class="mini-group-head">'
+            + ((showGroupHeads||lbl.isAll) ? '<span class="mini-avatar" style="background:'+lbl.color+'">'+lbl.inner+'</span>'+escapeHtml(lbl.name) : '')
+            + (horarioEv ? '<span class="mini-group-time" data-id="'+horarioEv.id+'" data-occ="'+toYMD(d)+'">'+timeChipsHtml(horarioEv)+'</span>' : '')
+            + '</div>';
+        }
+        displayEvs.forEach(function(ev){
+          var color = eventColor(ev, g.id);
+          var chips = (ev.start || ev.end) ? timeChipsHtml(ev) : '';
+          var label = miniDisplayLabel(ev);
+          html += '<div class="mini-event" style="border-left-color:'+color+'" data-id="'+ev.id+'" data-occ="'+toYMD(d)+'">'
+            + (label ? '<span class="t">'+(!ev.commentOnly ? '<span class="dot" style="background:'+color+'"></span>' : '')+label+'</span>' : '')
+            + (chips ? '<span class="mini-chips">'+chips+'</span>' : '')
+            + '</div>';
+        });
+        html += '</div>';
+      });
+    }
+    html += '</div></div>';
+    return html;
+  }
+
+  function periodStartFor(date){
+    return startOfWeekMonday(date);
+  }
+  function periodAdd(periodStart, dir){
+    return addDays(periodStart, dir*7);
+  }
+  function buildPeriodBlock(periodStart){
+    var dates = [];
+    for(var i=0;i<5;i++) dates.push(addDays(periodStart,i));
+    var cardsHtml = dates.map(function(dd){ return weekDayCardHtml(dd); }).join("");
+    return '<div class="period-block" data-period="'+toYMD(periodStart)+'">'+cardsHtml+'</div>';
+  }
+
+  var contState = { blocks: [] };
+  var lastShownPeriodKey = null;
+  var lastScrollTop = 0;
+
+  /* Bloqueo anti-inercia: tras un salto programático (ej. botón Hoy) el
+     scroll "momentum" de móvil puede seguir activo y pelear contra la
+     posición fijada. Se re-impone la posición por unos frames, pero se
+     cancela de inmediato si el usuario vuelve a tocar/scrollear. */
+  var scrollLockToken = 0;
+  function cancelScrollLock(){
+    scrollLockToken++;
+    if(viewWrap.style.overflowY === "hidden") viewWrap.style.overflowY = "";
+  }
+  function lockScrollPosition(targetTop, duration){
+    var myToken = ++scrollLockToken;
+    var lockUntil = (typeof performance!=="undefined" ? performance.now() : Date.now()) + duration;
+    var prevOverflow = viewWrap.style.overflowY;
+    viewWrap.style.overflowY = "hidden";
+    function frame(){
+      if(myToken !== scrollLockToken) return;
+      viewWrap.scrollTop = targetTop;
+      var now = (typeof performance!=="undefined" ? performance.now() : Date.now());
+      if(now < lockUntil){
+        requestAnimationFrame(frame);
+      }else{
+        viewWrap.style.overflowY = prevOverflow;
+      }
+    }
+    frame();
+  }
+  ["touchstart","wheel","pointerdown"].forEach(function(evt){
+    viewWrap.addEventListener(evt, cancelScrollLock, {passive:true});
+  });
+
+  function renderContinuousView(){
+    contState.blocks = [];
+    var centerStart = periodStartFor(state.currentDate);
+    var starts = [periodAdd(centerStart, -1), centerStart, periodAdd(centerStart, 1)];
+    var html = '<div class="week-grid" id="contGrid">';
+    starts.forEach(function(s){ html += buildPeriodBlock(s); });
+    html += '</div>';
+    viewWrap.innerHTML = html;
+    starts.forEach(function(s){
+      contState.blocks.push({ key: toYMD(s), start: s, el: viewWrap.querySelector('.period-block[data-period="'+toYMD(s)+'"]') });
+    });
+    lastShownPeriodKey = contState.blocks[1].key;
+    var targetHead = viewWrap.querySelector('.week-col-head[data-date="'+toYMD(state.currentDate)+'"]');
+    var targetEl = targetHead ? targetHead.closest(".week-col") : contState.blocks[1].el;
+    targetEl.scrollIntoView({block:"start"});
+    var targetTop = Math.max(0, viewWrap.scrollTop - 10);
+    viewWrap.scrollTop = targetTop;
+    lastScrollTop = targetTop;
+    lockScrollPosition(targetTop, 250);
+  }
+
+  function appendNextPeriod(){
+    var lastBlock = contState.blocks[contState.blocks.length-1];
+    var nextStart = periodAdd(lastBlock.start, 1);
+    var grid = document.getElementById("contGrid");
+    if(!grid) return;
+    grid.insertAdjacentHTML("beforeend", buildPeriodBlock(nextStart));
+    var el = grid.querySelector('.period-block[data-period="'+toYMD(nextStart)+'"]');
+    contState.blocks.push({ key: toYMD(nextStart), start: nextStart, el: el });
+    if(contState.blocks.length > 6){
+      var removed = contState.blocks.shift();
+      var beforeH = grid.scrollHeight;
+      removed.el.remove();
+      var afterH = grid.scrollHeight;
+      viewWrap.scrollTop -= (beforeH - afterH);
+    }
+  }
+  function prependPrevPeriod(){
+    var firstBlock = contState.blocks[0];
+    var prevStart = periodAdd(firstBlock.start, -1);
+    var grid = document.getElementById("contGrid");
+    if(!grid) return;
+    var beforeH = grid.scrollHeight;
+    grid.insertAdjacentHTML("afterbegin", buildPeriodBlock(prevStart));
+    var el = grid.querySelector('.period-block[data-period="'+toYMD(prevStart)+'"]');
+    contState.blocks.unshift({ key: toYMD(prevStart), start: prevStart, el: el });
+    var afterH = grid.scrollHeight;
+    viewWrap.scrollTop += (afterH - beforeH);
+    if(contState.blocks.length > 6){
+      var removed = contState.blocks.pop();
+      removed.el.remove();
+    }
+  }
+
+  function updateVisiblePeriodTitle(scrollDir){
+    if(!contState.blocks.length) return;
+    var wrapRect = viewWrap.getBoundingClientRect();
+    var targetY = wrapRect.top + viewWrap.clientHeight*0.18;
+    var current = contState.blocks[0];
+    for(var i=0;i<contState.blocks.length;i++){
+      var rect = contState.blocks[i].el.getBoundingClientRect();
+      if(rect.top <= targetY) current = contState.blocks[i];
+      else break;
+    }
+    if(current.key !== lastShownPeriodKey){
+      lastShownPeriodKey = current.key;
+      state.currentDate = current.start;
+      updateNavTitleAnimated(titleForPeriod(current.start), scrollDir || 1);
+      applyHeaderWeekColor();
+    }
+  }
+
+  viewWrap.addEventListener("scroll", function(){
+    updateScrollBackground();
+    if(state.view!=="week") return;
+    if(!contState.blocks.length) return;
+    var scrollDir = viewWrap.scrollTop > lastScrollTop ? 1 : (viewWrap.scrollTop < lastScrollTop ? -1 : 0);
+    var BUFFER = 400;
+    /* Solo una de las dos acciones por evento: si se dispara "append" y su
+       recorte de bloques viejos reduce el scrollTop, no debe interpretarse
+       además como "cerca del tope" y disparar un prepend en la misma pasada
+       (eso insertaba contenido pasado de más y confundía qué semana está
+       visible, devolviendo la vista hacia atrás). */
+    if(viewWrap.scrollTop + viewWrap.clientHeight >= viewWrap.scrollHeight - BUFFER){
+      appendNextPeriod();
+    }else if(viewWrap.scrollTop <= BUFFER){
+      prependPrevPeriod();
+    }
+    lastScrollTop = viewWrap.scrollTop;
+    updateVisiblePeriodTitle(scrollDir);
+  });
+
+  viewWrap.addEventListener("click", function(e){
+    if(state.view!=="week") return;
+    var mini = e.target.closest(".mini-event");
+    if(mini){ openEventModal(mini.getAttribute("data-id"), null, mini.getAttribute("data-occ")); return; }
+    var timeChip = e.target.closest(".mini-group-time");
+    if(timeChip){ openEventModal(timeChip.getAttribute("data-id"), null, timeChip.getAttribute("data-occ")); return; }
+    var empty = e.target.closest(".mini-empty");
+    if(empty){ openEventModal(null, fromYMD(empty.getAttribute("data-empty-date"))); return; }
+    var head = e.target.closest(".week-col-head");
+    if(head){
+      var headDate = fromYMD(head.getAttribute("data-date"));
+      if(eventsForDate(headDate).length===0){ openEventModal(null, headDate); return; }
+      state.currentDate = headDate; setView("day"); return;
+    }
+  });
+
+  function renderWeekView(){ renderContinuousView(); }
+
+  function render(){
+    ensureDefaultStudent();
+    renderStudentSelect();
+    renderNavTitle();
+    if(state.view==="day") renderDayView();
+    else renderWeekView();
+    updateScrollBackground();
+    applyHeaderWeekColor();
+  }
+
+  function renderWithTransition(){
+    viewWrap.classList.remove("view-enter");
+    void viewWrap.offsetWidth; /* reinicia la animación */
+    render();
+    viewWrap.classList.add("view-enter");
+  }
+
+  /* ============ Top controls events ============ */
+  document.getElementById("btnPrev").addEventListener("click", function(){ navStep(-1); });
+  document.getElementById("btnNext").addEventListener("click", function(){ navStep(1); });
+  document.getElementById("btnToday").addEventListener("click", function(){
+    state.currentDate = todayDate(); renderWithTransition();
+  });
+  function navStep(dir){
+    if(state.view==="day") state.currentDate = addDays(state.currentDate, dir);
+    else state.currentDate = addDays(state.currentDate, dir*7);
+    render();
+  }
+
+  /* ============ Students modal ============ */
+  var studentsOverlay = document.getElementById("studentsOverlay");
+  var newStudentColorRow = document.getElementById("newStudentColorRow");
+  var pickedNewColor = PALETTE[0];
+
+  function buildColorRow(container, onPick, selected){
+    container.innerHTML = "";
+    PALETTE.forEach(function(c){
+      var sw = document.createElement("div");
+      sw.className = "swatch"+(c===selected?" active":"");
+      sw.style.background = c;
+      sw.addEventListener("click", function(){
+        container.querySelectorAll(".swatch").forEach(function(s){s.classList.remove("active");});
+        sw.classList.add("active");
+        onPick(c);
+      });
+      container.appendChild(sw);
+    });
+  }
+
+  function renderStudentList(){
+    var list = document.getElementById("studentList");
+    if(DATA.students.length===0){
+      list.innerHTML = '<div class="hint">Aún no hay estudiantes. Agrega el primero abajo.</div>';
+      return;
+    }
+    list.innerHTML = DATA.students.map(function(s){
+      return '<div class="student-row" data-id="'+s.id+'">'
+        + '<span class="dot" style="background:'+s.color+'"></span>'
+        + '<span class="name">'+escapeHtml(s.name)+'</span>'
+        + '<button class="icon-mini edit" data-id="'+s.id+'" title="Editar">'+ICON_EDIT+'</button>'
+        + '<button class="icon-mini del" data-id="'+s.id+'" title="Eliminar">'+ICON_TRASH+'</button>'
+      + '</div>';
+    }).join("");
+    list.querySelectorAll(".edit").forEach(function(btn){
+      btn.addEventListener("click", function(e){
+        e.stopPropagation();
+        startEditStudent(btn.getAttribute("data-id"));
+      });
+    });
+    list.querySelectorAll(".del").forEach(function(btn){
+      btn.addEventListener("click", function(e){
+        e.stopPropagation();
+        var id = btn.getAttribute("data-id");
+        var st = getStudent(id);
+        var hasEvents = DATA.events.some(function(ev){return ev.studentId===id;});
+        var msg = "¿Eliminar a "+(st?st.name:"este estudiante")+"?"+(hasEvents? " También se eliminarán sus eventos." : "");
+        showAppConfirm(msg, function(){
+          DATA.events = DATA.events.filter(function(ev){return ev.studentId!==id;});
+          DATA.students = DATA.students.filter(function(s){return s.id!==id;});
+          saveData();
+          if(Array.isArray(state.studentFilter)){
+            state.studentFilter = state.studentFilter.filter(function(sid){return sid!==id;});
+            if(state.studentFilter.length===0) state.studentFilter="all";
+          }
+          if(editingStudentId===id) resetStudentForm();
+          renderStudentList();
+          render();
+        });
+      });
+    });
+  }
+
+  var editingStudentId = null;
+
+  function resetStudentForm(){
+    editingStudentId = null;
+    document.getElementById("studentFormLabel").textContent = "Nombre del nuevo estudiante";
+    document.getElementById("btnAddStudent").textContent = "Agregar estudiante";
+    document.getElementById("btnCancelEditStudent").style.display = "none";
+    document.getElementById("newStudentName").value = "";
+    pickedNewColor = PALETTE[DATA.students.length % PALETTE.length];
+    buildColorRow(newStudentColorRow, function(c){ pickedNewColor = c; }, pickedNewColor);
+  }
+
+  function startEditStudent(id){
+    var st = getStudent(id);
+    if(!st) return;
+    editingStudentId = id;
+    document.getElementById("studentFormLabel").textContent = "Editar nombre";
+    document.getElementById("btnAddStudent").textContent = "Guardar cambios";
+    document.getElementById("btnCancelEditStudent").style.display = "block";
+    document.getElementById("newStudentName").value = st.name;
+    pickedNewColor = st.color;
+    buildColorRow(newStudentColorRow, function(c){ pickedNewColor = c; }, pickedNewColor);
+    document.getElementById("newStudentName").focus();
+  }
+
+  function openStudentsModal(){
+    renderStudentList();
+    resetStudentForm();
+    studentsOverlay.classList.add("open");
+  }
+  document.getElementById("btnStudents").addEventListener("click", openStudentsModal);
+  document.getElementById("studentsClose").addEventListener("click", function(){ studentsOverlay.classList.remove("open"); });
+  studentsOverlay.addEventListener("click", function(e){ if(e.target===studentsOverlay) studentsOverlay.classList.remove("open"); });
+  document.getElementById("btnCancelEditStudent").addEventListener("click", resetStudentForm);
+
+  document.getElementById("btnAddStudent").addEventListener("click", function(){
+    var name = document.getElementById("newStudentName").value.trim();
+    if(!name){ showAppAlert("Escribe un nombre."); return; }
+    if(editingStudentId){
+      var st = getStudent(editingStudentId);
+      if(st){ st.name = name; st.color = pickedNewColor; }
+      saveData();
+      resetStudentForm();
+      renderStudentList();
+      render();
+      return;
+    }
+    DATA.students.push({id: uid(), name: name, color: pickedNewColor});
+    saveData();
+    renderStudentList();
+    render();
+    document.getElementById("newStudentName").value = "";
+  });
+
+  /* ============ Event modal ============ */
+  var eventOverlay = document.getElementById("eventOverlay");
+  var editingId = null;
+  var currentKind = "single";
+  var currentWeekdays = [1];
+  var currentOccurrenceDate = null;
+
+  var f_title = document.getElementById("f_title");
+  var f_student = document.getElementById("f_student");
+  var f_student2 = document.getElementById("f_student2");
+  var f_student3 = document.getElementById("f_student3");
+  var f_date = document.getElementById("f_date");
+  var f_dateH = document.getElementById("f_dateH");
+  var f_dateC = document.getElementById("f_dateC");
+  var f_rangeStart = document.getElementById("f_rangeStart");
+  var f_rangeEnd = document.getElementById("f_rangeEnd");
+  var f_start = document.getElementById("f_start");
+  var f_end = document.getElementById("f_end");
+  var f_notes = document.getElementById("f_notes");
+
+  function fillStudentSelectForForm(){
+    var options = '<option value="all">'+allLabel()+'</option>';
+    options += DATA.students.map(function(s){
+      return '<option value="'+s.id+'">'+escapeHtml(s.name)+'</option>';
+    }).join("");
+    f_student.innerHTML = options;
+    f_student2.innerHTML = options;
+    f_student3.innerHTML = options;
+  }
+  f_student.addEventListener("change", function(){
+    f_student2.value = f_student.value;
+    f_student3.value = f_student.value;
+  });
+  f_student2.addEventListener("change", function(){
+    f_student.value = f_student2.value;
+    f_student3.value = f_student2.value;
+  });
+  f_student3.addEventListener("change", function(){
+    f_student.value = f_student3.value;
+    f_student2.value = f_student3.value;
+  });
+
+  function setAllDateFields(ymd){
+    f_date.value = ymd;
+    f_dateH.value = ymd;
+    f_dateC.value = ymd;
+  }
+  f_date.addEventListener("change", function(){
+    f_dateH.value = f_date.value;
+    f_dateC.value = f_date.value;
+  });
+  f_dateH.addEventListener("change", function(){
+    f_date.value = f_dateH.value;
+    f_dateC.value = f_dateH.value;
+  });
+  f_dateC.addEventListener("change", function(){
+    f_date.value = f_dateC.value;
+    f_dateH.value = f_dateC.value;
+  });
+  document.querySelectorAll(".field-today-btn").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      setAllDateFields(toYMD(todayDate()));
+    });
+  });
+
+  function setKind(k){
+    currentKind = k;
+    document.querySelectorAll("#f_kindSeg button").forEach(function(b){
+      b.classList.toggle("active", b.getAttribute("data-kind")===k);
+    });
+    document.getElementById("field_singleDate").style.display = (k==="single")? "block":"none";
+    document.getElementById("field_range").style.display = (k==="daily"||k==="weekly")? "block":"none";
+    document.getElementById("field_weekday").style.display = (k==="weekly")? "block":"none";
+  }
+  document.querySelectorAll("#f_kindSeg button").forEach(function(b){
+    b.addEventListener("click", function(){ setKind(b.getAttribute("data-kind")); });
+  });
+
+  function setWeekdays(arr){
+    currentWeekdays = arr.slice().sort();
+    document.querySelectorAll("#f_weekdayPicker button").forEach(function(b){
+      var wd = parseInt(b.getAttribute("data-wd"),10);
+      b.classList.toggle("active", currentWeekdays.indexOf(wd)!==-1);
+    });
+  }
+  function toggleWeekday(wd){
+    var idx = currentWeekdays.indexOf(wd);
+    if(idx===-1) currentWeekdays.push(wd);
+    else currentWeekdays.splice(idx,1);
+    setWeekdays(currentWeekdays);
+  }
+  document.querySelectorAll("#f_weekdayPicker button").forEach(function(b){
+    b.addEventListener("click", function(){ toggleWeekday(parseInt(b.getAttribute("data-wd"),10)); });
+  });
+
+  function setEventTab(tab){
+    document.querySelectorAll("#eventTabNav button").forEach(function(b){
+      b.classList.toggle("active", b.getAttribute("data-tab")===tab);
+    });
+    document.querySelectorAll(".tab-panel").forEach(function(p){
+      p.style.display = (p.getAttribute("data-panel")===tab) ? "block" : "none";
+    });
+  }
+  // null/omitted = show all three tabs; an array restricts the nav to just those tabs.
+  function setTabNavVisibility(allowed){
+    document.querySelectorAll("#eventTabNav button").forEach(function(b){
+      var t = b.getAttribute("data-tab");
+      b.style.display = (!allowed || allowed.indexOf(t)!==-1) ? "" : "none";
+    });
+  }
+  function eventTypeOf(ev){
+    if(ev.commentOnly) return "comentario";
+    if((ev.start || ev.end) && !ev.title) return "horario";
+    return "evento";
+  }
+  document.querySelectorAll("#eventTabNav button").forEach(function(b){
+    b.addEventListener("click", function(){ setEventTab(b.getAttribute("data-tab")); });
+  });
+
+  function openEventModal(id, prefDate, occurrenceDate){
+    if(DATA.students.length===0){
+      showAppAlert("Primero agrega un estudiante.", function(){ openStudentsModal(); });
+      return;
+    }
+    var evForAllCheck = id ? DATA.events.find(function(e){return e.id===id;}) : null;
+    if(evForAllCheck && evForAllCheck.studentId==="all"){
+      showAppConfirm('Este evento está asignado a '+allLabel()+', no solo a un estudiante. ¿Deseas continuar editándolo?', function(){
+        proceedOpenEventModal(id, prefDate, occurrenceDate);
+      });
+      return;
+    }
+    proceedOpenEventModal(id, prefDate, occurrenceDate);
+  }
+
+  function proceedOpenEventModal(id, prefDate, occurrenceDate){
+    fillStudentSelectForForm();
+    editingId = id || null;
+    currentOccurrenceDate = occurrenceDate || null;
+    document.getElementById("eventModalTitle").textContent = editingId ? "Editar evento" : "Nuevo evento";
+    document.getElementById("btnDeleteEvent").style.display = editingId ? "block" : "none";
+
+    if(editingId){
+      var ev = DATA.events.find(function(e){return e.id===editingId;});
+      f_title.value = ev.title;
+      f_student.value = ev.studentId;
+      f_student2.value = ev.studentId;
+      f_student3.value = ev.studentId;
+      setKind(ev.kind);
+      if(ev.kind==="single") setAllDateFields(ev.date);
+      if(ev.kind==="daily"||ev.kind==="weekly"){
+        f_rangeStart.value = ev.rangeStart;
+        f_rangeEnd.value = ev.rangeEnd;
+      }
+      if(ev.kind==="weekly") setWeekdays(ev.weekdays || (ev.weekday!=null ? [ev.weekday] : [1]));
+      f_start.value = ev.start || "";
+      f_end.value = ev.end || "";
+      f_notes.value = ev.notes || "";
+    }else{
+      f_title.value = "";
+      var defaultStudentId = (Array.isArray(state.studentFilter) && state.studentFilter.length===1) ? state.studentFilter[0] : "all";
+      f_student.value = defaultStudentId;
+      f_student2.value = defaultStudentId;
+      f_student3.value = defaultStudentId;
+      setKind("single");
+      var baseDate = prefDate || state.currentDate;
+      setAllDateFields(toYMD(baseDate));
+      f_rangeStart.value = toYMD(baseDate);
+      f_rangeEnd.value = toYMD(addDays(baseDate,30));
+      setWeekdays([baseDate.getDay()>=1 && baseDate.getDay()<=5 ? baseDate.getDay() : 1]);
+      f_start.value = "";
+      f_end.value = "";
+      f_notes.value = "";
+    }
+    if(editingId){
+      setTabNavVisibility([eventTypeOf(ev)]);
+      setEventTab(eventTypeOf(ev));
+    }else{
+      setTabNavVisibility(null);
+      setEventTab("horario");
+    }
+    eventOverlay.classList.add("open");
+  }
+
+  document.getElementById("eventClose").addEventListener("click", closeEventModal);
+  document.getElementById("btnCancelEvent").addEventListener("click", closeEventModal);
+  eventOverlay.addEventListener("click", function(e){ if(e.target===eventOverlay) closeEventModal(); });
+  function closeEventModal(){ eventOverlay.classList.remove("open"); editingId=null; currentOccurrenceDate=null; }
+
+  document.getElementById("btnSaveEvent").addEventListener("click", function(){
+    var rawTitle = f_title.value.trim();
+    var title = rawTitle;
+    var notesVal = f_notes.value.trim();
+    var hasTime = !!(f_start.value || f_end.value);
+    if(!title && !notesVal && !hasTime){ showAppAlert("Completa al menos uno: evento, horario o comentario."); return; }
+    var commentOnly = !rawTitle && !hasTime;
+    var studentId = f_student.value;
+    if(!studentId){ showAppAlert("Selecciona un estudiante."); return; }
+
+    var ev = {
+      id: editingId || uid(),
+      title: title,
+      studentId: studentId,
+      kind: currentKind,
+      start: f_start.value || "",
+      end: f_end.value || "",
+      notes: notesVal,
+      commentOnly: commentOnly
+    };
+
+    if(currentKind==="single"){
+      if(!f_date.value){ showAppAlert("Selecciona una fecha."); return; }
+      ev.date = f_date.value;
+      if(hasTime){
+        var affectedIds = studentId==="all" ? DATA.students.map(function(s){return s.id;}) : [studentId];
+        var conflict = DATA.events.find(function(e){
+          if(e.id===editingId) return false;
+          if(e.kind!=="single" || e.date!==ev.date) return false;
+          if(!(e.start || e.end)) return false;
+          var eIds = e.studentId==="all" ? DATA.students.map(function(s){return s.id;}) : [e.studentId];
+          return eIds.some(function(id){ return affectedIds.indexOf(id)!==-1; });
+        });
+        if(conflict){
+          showAppAlert("Ese día ya tiene un horario de entrada/salida registrado para este estudiante. Solo puedes editarlo o eliminarlo.");
+          return;
+        }
+      }
+    }else{
+      if(!f_rangeStart.value || !f_rangeEnd.value){ showAppAlert("Selecciona el rango de fechas."); return; }
+      if(f_rangeStart.value > f_rangeEnd.value){ showAppAlert("La fecha 'hasta' debe ser posterior a 'desde'."); return; }
+      ev.rangeStart = f_rangeStart.value;
+      ev.rangeEnd = f_rangeEnd.value;
+      if(currentKind==="weekly"){
+        if(currentWeekdays.length===0){ showAppAlert("Selecciona al menos un día de la semana."); return; }
+        ev.weekdays = currentWeekdays.slice();
+      }
+    }
+
+    function commitSaveEvent(){
+      if(editingId){
+        var idx = DATA.events.findIndex(function(e){return e.id===editingId;});
+        DATA.events[idx] = ev;
+      }else{
+        DATA.events.push(ev);
+      }
+      saveData();
+      closeEventModal();
+      render();
+    }
+
+    if(commentOnly && studentId==="all"){
+      showAppConfirm('Este comentario se creará para '+allLabel()+', no para un estudiante en particular. ¿Continuar?', commitSaveEvent);
+    }else{
+      commitSaveEvent();
+    }
+  });
+
+  var deleteChoiceOverlay = document.getElementById("deleteChoiceOverlay");
+
+  function closeDeleteChoice(){ deleteChoiceOverlay.classList.remove("open"); }
+
+  document.getElementById("btnDeleteEvent").addEventListener("click", function(){
+    if(!editingId) return;
+    var ev = DATA.events.find(function(e){return e.id===editingId;});
+    if(ev.kind==="single"){
+      showAppConfirm("¿Eliminar este evento?", function(){
+        DATA.events = DATA.events.filter(function(e){return e.id!==editingId;});
+        saveData();
+        closeEventModal();
+        render();
+      });
+      return;
+    }
+    // Recurring event: ask whether to delete only this occurrence or the whole chain
+    var dateText = currentOccurrenceDate ? fromYMD(currentOccurrenceDate).toLocaleDateString("es-CR",{weekday:"long",day:"numeric",month:"long"}) : null;
+    document.getElementById("deleteChoiceText").textContent = dateText
+      ? 'Este evento ("'+ev.title+'") se repite. ¿Quieres eliminar solo el del '+dateText+', o toda la cadena de fechas?'
+      : 'Este evento ("'+ev.title+'") se repite en varias fechas. ¿Qué deseas eliminar?';
+    document.getElementById("btnDeleteOnlyThis").style.display = currentOccurrenceDate ? "block" : "none";
+    deleteChoiceOverlay.classList.add("open");
+  });
+
+  document.getElementById("btnDeleteOnlyThis").addEventListener("click", function(){
+    if(!editingId || !currentOccurrenceDate) return;
+    var ev = DATA.events.find(function(e){return e.id===editingId;});
+    if(!ev) return;
+    ev.excludedDates = ev.excludedDates || [];
+    if(ev.excludedDates.indexOf(currentOccurrenceDate)===-1){
+      ev.excludedDates.push(currentOccurrenceDate);
+    }
+    saveData();
+    closeDeleteChoice();
+    closeEventModal();
+    render();
+  });
+
+  document.getElementById("btnDeleteWholeChain").addEventListener("click", function(){
+    if(!editingId) return;
+    showAppConfirm("Esto eliminará TODA la cadena de eventos recurrentes (todas sus fechas). ¿Continuar?", function(){
+      DATA.events = DATA.events.filter(function(e){return e.id!==editingId;});
+      saveData();
+      closeDeleteChoice();
+      closeEventModal();
+      render();
+    });
+  });
+
+  document.getElementById("btnDeleteCancel").addEventListener("click", closeDeleteChoice);
+  document.getElementById("deleteChoiceClose").addEventListener("click", closeDeleteChoice);
+  deleteChoiceOverlay.addEventListener("click", function(e){ if(e.target===deleteChoiceOverlay) closeDeleteChoice(); });
+
+  document.getElementById("btnAdd").addEventListener("click", function(){
+    openEventModal(null, state.view==="day" ? state.currentDate : null);
+  });
+
+  document.getElementById("btnFontDown").addEventListener("click", function(){
+    applyFontScale(currentFontScale - FONT_SCALE_STEP);
+  });
+  document.getElementById("btnFontUp").addEventListener("click", function(){
+    applyFontScale(currentFontScale + FONT_SCALE_STEP);
+  });
+
+  /* ============ Búsqueda ============ */
+  var btnSearchToggle = document.getElementById("btnSearchToggle");
+  btnSearchToggle.innerHTML = ICON_SEARCH;
+  var searchBar = document.getElementById("searchBar");
+  var searchInput = document.getElementById("searchInput");
+  var searchResults = document.getElementById("searchResults");
+
+  btnSearchToggle.addEventListener("click", function(){
+    var opening = !searchBar.classList.contains("open");
+    searchBar.classList.toggle("open", opening);
+    btnSearchToggle.classList.toggle("active", opening);
+    if(opening){
+      setTimeout(function(){ searchInput.focus(); }, 0);
+      runSearch();
+    }else{
+      searchInput.value = "";
+      searchResults.innerHTML = "";
+    }
+  });
+
+  function highlightMatch(text, query){
+    if(!query) return escapeHtml(text);
+    var idx = text.toLowerCase().indexOf(query.toLowerCase());
+    if(idx===-1) return escapeHtml(text);
+    return escapeHtml(text.slice(0,idx)) + "<mark>" + escapeHtml(text.slice(idx, idx+query.length)) + "</mark>" + escapeHtml(text.slice(idx+query.length));
+  }
+  function eventWhenText(ev){
+    if(ev.kind==="single"){
+      var d = fromYMD(ev.date);
+      return WD_FULL[d.getDay()].charAt(0).toUpperCase()+WD_FULL[d.getDay()].slice(1)+" "+d.getDate()+" de "+MONTH_NAMES[d.getMonth()];
+    }
+    var rs = fromYMD(ev.rangeStart), re = fromYMD(ev.rangeEnd);
+    var rangeText = rs.getDate()+" "+MONTH_NAMES[rs.getMonth()].slice(0,3)+" – "+re.getDate()+" "+MONTH_NAMES[re.getMonth()].slice(0,3);
+    if(ev.kind==="weekly"){
+      var wds = (ev.weekdays || (ev.weekday!=null ? [ev.weekday] : [])).map(function(wd){return WD_NAMES[wd];}).join(", ");
+      return wds+" · "+rangeText;
+    }
+    return "Rango "+rangeText;
+  }
+  function runSearch(){
+    var q = searchInput.value.trim();
+    if(!q){
+      searchResults.innerHTML = '<div class="search-empty">Escribe para buscar en títulos y comentarios…</div>';
+      return;
+    }
+    var ql = q.toLowerCase();
+    var matches = DATA.events.filter(function(ev){
+      if(!isStudentVisible(ev.studentId)) return false;
+      return (ev.title && ev.title.toLowerCase().indexOf(ql)!==-1) || (ev.notes && ev.notes.toLowerCase().indexOf(ql)!==-1);
+    });
+    if(matches.length===0){
+      searchResults.innerHTML = '<div class="search-empty">Sin resultados para “'+escapeHtml(q)+'”.</div>';
+      return;
+    }
+    searchResults.innerHTML = matches.map(function(ev){
+      var lbl = groupLabel(ev.studentId);
+      var titleHtml = ev.title ? highlightMatch(ev.title, q) : '<em>'+highlightMatch((ev.notes||"").slice(0,40), q)+'</em>';
+      var notesHtml = (ev.notes && ev.title) ? '<div class="sr-notes">'+highlightMatch(ev.notes, q)+'</div>' : '';
+      return '<div class="search-result" data-id="'+ev.id+'" data-occ="'+(ev.date||"")+'">'
+        + '<div class="sr-top"><span class="sr-avatar" style="background:'+lbl.color+'">'+lbl.inner+'</span>'
+        + escapeHtml(lbl.name)+' · '+escapeHtml(eventWhenText(ev))+'</div>'
+        + '<div class="sr-title">'+titleHtml+'</div>'
+        + notesHtml
+      + '</div>';
+    }).join("");
+    searchResults.querySelectorAll(".search-result").forEach(function(el){
+      el.addEventListener("click", function(){
+        openEventModal(el.getAttribute("data-id"), null, el.getAttribute("data-occ") || null);
+      });
+    });
+  }
+  searchInput.addEventListener("input", runSearch);
+
+  /* ============ Init ============ */
+  ensureDefaultStudent();
+  if(DATA.students.length===1 && DATA.events.length===0){
+    // leave as-is; user can rename default student via Estudiantes panel
+  }
+  applyFontScale(currentFontScale);
+  render();
+
+})();
+</script>
+</body>
+</html>
