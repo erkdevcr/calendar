@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>Calendario Escolar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Quicksand:wght@500;700&family=Orbitron:wght@600;700;800&family=Rajdhani:wght@500;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
   :root{
     --bg:#cfd2d9;
@@ -458,10 +461,717 @@
     *{animation-duration:.01ms !important;transition-duration:.01ms !important;}
   }
 
+
+
+  /* ---------- Menú de ajustes y selector de tema ---------- */
+  .menu-row, .theme-row{
+    width:100%;display:flex;align-items:center;gap:12px;
+    background:var(--bg);border:1px solid var(--border);border-radius:14px;
+    padding:13px 14px;margin-bottom:10px;text-align:left;color:var(--ink);
+  }
+  .menu-row:last-child, .theme-row:last-child{margin-bottom:0;}
+  .menu-ico{
+    flex:none;width:34px;height:34px;border-radius:50%;background:var(--card);
+    display:flex;align-items:center;justify-content:center;color:var(--accent);
+    border:1px solid var(--border);
+  }
+  .menu-txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;}
+  .menu-title{font-size:14.5px;font-weight:700;}
+  .menu-sub{font-size:11.5px;color:var(--ink-soft);font-weight:600;}
+  .menu-arrow{flex:none;color:var(--ink-soft);font-size:20px;line-height:1;}
+
+  .theme-prev{
+    flex:none;width:44px;height:44px;border-radius:12px;overflow:hidden;
+    display:flex;flex-direction:column;
+  }
+  .theme-prev i{display:block;flex:1;}
+  .theme-prev-original i:nth-child(1){background:#4f6df5;}
+  .theme-prev-original i:nth-child(2){background:#e1dffb;}
+  .theme-prev-original i:nth-child(3){background:#ffffff;}
+  .theme-prev-original{border:1px solid var(--border);}
+  .theme-prev-fancy i:nth-child(1){background:#f472a8;}
+  .theme-prev-fancy i:nth-child(2){background:#f5e14a;}
+  .theme-prev-fancy i:nth-child(3){background:#c3ea86;}
+  .theme-prev-fancy{border:2.2px solid #1a1a1a;}
+  .theme-prev-nebula i:nth-child(1){background:#2b2d31;}
+  .theme-prev-nebula i:nth-child(2){background:#9aa0a8;}
+  .theme-prev-nebula i:nth-child(3){background:#0b0c0e;}
+  .theme-prev-nebula{border:1px solid rgba(255,255,255,.5);box-shadow:0 0 10px rgba(238,243,247,.3);}
+  .theme-prev-darkblue i:nth-child(1){background:#0d1f3c;}
+  .theme-prev-darkblue i:nth-child(2){background:#2f7bd6;}
+  .theme-prev-darkblue i:nth-child(3){background:#123156;}
+  .theme-prev-darkblue{border:1px solid rgba(255,255,255,.2);}
+  .theme-txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;}
+  .theme-name{font-size:14.5px;font-weight:700;}
+  .theme-desc{font-size:11.5px;color:var(--ink-soft);font-weight:600;}
+  .theme-check{
+    flex:none;width:24px;height:24px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    background:var(--accent);color:#fff;font-size:13px;font-weight:700;
+    opacity:0;transform:scale(.6);
+    transition:opacity .18s ease, transform .22s cubic-bezier(.2,.9,.3,1.4);
+  }
+  .theme-row.selected{border-color:var(--accent);}
+  .theme-row.selected .theme-check{opacity:1;transform:scale(1);}
+  .menu-row, .theme-row{transition:transform .14s ease, background-color .2s ease, border-color .2s ease;}
+  .menu-row:active, .theme-row:active{transform:scale(.97);}
+
+  /* ============================================================
+     TEMA "FANCY" (Y2K) — se activa con body.theme-fancy
+     Contornos negros gruesos, sombras duras sin blur, pastel
+     saturado y formas de pildora. Solo estetica.
+     ============================================================ */
+  /* ---- Variables del tema Fancy ---- */
+  body.theme-fancy{
+    --fy-bg:#f7cfe0;
+    --fy-white:#fffdf8;
+    --fy-yellow:#f5e14a;
+    --fy-mint:#c3ea86;
+    --fy-pink:#f472a8;
+    --fy-lav:#b7a3e6;
+    --fy-outline:#1a1a1a;
+
+    --bg:#f7cfe0;
+    --card:#fffdf8;
+    --card-head:#f5e14a;
+    --ink:#1a1a1a;
+    --ink-soft:rgba(26,26,26,.6);
+    --border:rgba(26,26,26,.16);
+    --accent:#f472a8;
+    --accent-ink:#ffffff;
+    --danger:#ef5a4c;
+    --radius:18px;
+    --radius-sm:12px;
+    --weekend:#f3f0e6;
+    --today-ring:#f472a8;
+    --shadow:3px 3px 0 rgba(26,26,26,.18);
+  }
+  /* ============================================================
+     FANCY THEME — capa de piel Y2K sobre la app
+     Contornos negros gruesos, sombras duras (sin blur), pastel
+     saturado y formas de píldora. Solo estética: no cambia layout.
+     ============================================================ */
+  body.theme-fancy{font-family:'Fredoka','Quicksand',sans-serif;}
+
+  /* ---- Header ---- */
+  body.theme-fancy .topbar{
+    border-bottom:2.6px solid var(--fy-outline);
+    box-shadow:0 4px 0 rgba(26,26,26,.18);
+  }
+  body.theme-fancy .topbar-band{
+    border-bottom:2.4px solid var(--fy-outline);
+    padding-bottom:9px;
+  }
+  body.theme-fancy .topbar-main{padding-bottom:12px;}
+  body.theme-fancy .student-chip{
+    border:2.2px solid var(--fy-outline);
+    box-shadow:2px 2px 0 rgba(26,26,26,.25);
+    font-family:inherit;
+  }
+  body.theme-fancy .student-chip.selected{
+    box-shadow:0 0 0 3px var(--fy-yellow), 2px 2px 0 rgba(26,26,26,.3);
+    transform:scale(1.04);
+  }
+  body.theme-fancy .icon-btn, body.theme-fancy .font-scale-btn, body.theme-fancy .topbar-band .icon-btn, body.theme-fancy .topbar-band .font-scale-btn{
+    background:var(--fy-white);border:2.2px solid var(--fy-outline);color:var(--fy-outline);
+    box-shadow:2px 2px 0 rgba(26,26,26,.25);font-weight:700;
+  }
+  body.theme-fancy .font-scale-btn{border-radius:11px;}
+  body.theme-fancy .icon-btn:active, body.theme-fancy .font-scale-btn:active, body.theme-fancy .topbar-band .icon-btn:active, body.theme-fancy .topbar-band .font-scale-btn:active{background:var(--fy-yellow);}
+  body.theme-fancy .font-scale-btn.active{background:var(--fy-pink);color:#fff;border-color:var(--fy-outline);}
+  body.theme-fancy .icon-btn:active, body.theme-fancy .font-scale-btn:active{transform:translate(2px,2px);box-shadow:0 0 0 rgba(26,26,26,0);}
+  body.theme-fancy .view-pill{
+    border:2.2px solid var(--fy-outline);background:var(--fy-white);color:var(--fy-outline);
+    box-shadow:2px 2px 0 rgba(26,26,26,.2);
+    font-weight:700;
+  }
+  body.theme-fancy .view-pill.active{
+    background:var(--fy-yellow);border-color:var(--fy-outline);color:var(--fy-outline);
+    box-shadow:2px 2px 0 rgba(26,26,26,.3);
+  }
+  body.theme-fancy .nav-btn{
+    border:2.2px solid var(--fy-outline);background:var(--fy-white);color:var(--fy-outline);
+    box-shadow:2px 2px 0 rgba(26,26,26,.22);font-weight:700;
+  }
+  body.theme-fancy .nav-title{font-weight:700;letter-spacing:.2px;}
+  body.theme-fancy .today-btn{
+    border:2.2px solid var(--fy-outline);background:var(--fy-mint);color:var(--fy-outline);
+    font-weight:700;box-shadow:2px 2px 0 rgba(26,26,26,.25);
+  }
+  body.theme-fancy .search-bar input{
+    border:2.2px solid var(--fy-outline);border-radius:16px;background:var(--fy-white);
+    font-family:inherit;font-weight:600;
+  }
+  body.theme-fancy .search-bar input:focus{outline:2px dotted var(--fy-outline);outline-offset:1px;}
+  body.theme-fancy .search-result{
+    border:2.2px solid var(--fy-outline);border-radius:14px;
+    box-shadow:3px 3px 0 rgba(26,26,26,.18);background:var(--fy-white);
+  }
+  body.theme-fancy .search-result mark{background:var(--fy-yellow);font-weight:700;}
+
+  /* ---- Cards (semana y día) ---- */
+  body.theme-fancy .week-col, body.theme-fancy .day-block{
+    border:2.4px solid var(--fy-outline);
+    box-shadow:3px 3px 0 rgba(26,26,26,.2);
+    background:var(--fy-white);
+  }
+  body.theme-fancy .week-col-head{
+    border-bottom:2.4px solid var(--fy-outline);
+    font-weight:700;
+  }
+  body.theme-fancy .week-col-head .mo, body.theme-fancy .week-col-head .wd{color:rgba(26,26,26,.62);}
+  body.theme-fancy .week-col-head.is-today .dn{
+    background:var(--fy-pink);color:#fff;
+    border:2px solid var(--fy-outline);width:28px;height:28px;
+  }
+  body.theme-fancy .day-block-head{
+    border-bottom:2.4px solid var(--fy-outline);
+    background:var(--fy-yellow);
+  }
+  /* Las card-titles del tema rotan de color: amarillo, menta, rosa, lavanda */
+  body.theme-fancy .day-block:nth-child(4n+2) .day-block-head{background:var(--fy-mint);}
+  body.theme-fancy .day-block:nth-child(4n+3) .day-block-head{background:var(--fy-pink);color:#fff;}
+  body.theme-fancy .day-block:nth-child(4n+3) .day-block-count{background:var(--fy-white);}
+  body.theme-fancy .day-block:nth-child(4n+4) .day-block-head{background:var(--fy-lav);color:#fff;}
+  body.theme-fancy .day-block:nth-child(4n+4) .day-block-count{background:var(--fy-white);}
+
+  /* Botón cerrar con aire de control de ventana Y2K */
+  body.theme-fancy .sheet-close{
+    width:26px;height:26px;border-radius:50%;
+    background:var(--fy-pink);color:#fff;
+    border:2px solid var(--fy-outline);
+    box-shadow:2px 2px 0 rgba(26,26,26,.25);
+  }
+  body.theme-fancy .sheet-close:active{transform:translate(2px,2px);box-shadow:0 0 0 rgba(26,26,26,0);}
+  body.theme-fancy .day-block-avatar, body.theme-fancy .mini-avatar{
+    border:2px solid var(--fy-outline);
+  }
+  body.theme-fancy .day-block-count{
+    background:var(--fy-mint);color:var(--fy-outline);
+    border:1.8px solid var(--fy-outline);font-weight:700;padding:2px 10px;
+  }
+  body.theme-fancy .period-block{border-bottom:none;}
+
+  /* ---- Eventos ---- */
+  body.theme-fancy .mini-event{
+    border:2px solid var(--fy-outline);
+    border-left-width:6px;
+    border-radius:12px;
+    background:var(--fy-white);
+    box-shadow:2px 2px 0 rgba(26,26,26,.14);
+  }
+  body.theme-fancy .mini-event:last-child{border-bottom:2px solid var(--fy-outline);}
+  body.theme-fancy .mini-event .t{font-weight:700;}
+  body.theme-fancy .mini-event .t .dot{border:1.4px solid var(--fy-outline);width:10px;height:10px;}
+  body.theme-fancy .mini-empty{
+    border:2px dashed rgba(26,26,26,.3);border-radius:12px;
+    font-weight:700;color:rgba(26,26,26,.5);
+  }
+  body.theme-fancy .day-row{border-bottom:1.6px solid rgba(26,26,26,.14);}
+  body.theme-fancy .day-row-title .dot{border:1.6px solid var(--fy-outline);width:11px;height:11px;}
+  body.theme-fancy .mini-group-head{color:rgba(26,26,26,.62);font-weight:700;}
+  body.theme-fancy .pill{
+    border:1.8px solid var(--fy-outline);background:var(--fy-white);
+    color:var(--fy-outline);font-weight:700;padding:2px 9px;
+  }
+  body.theme-fancy .pill .dot{border:1.2px solid var(--fy-outline);}
+  body.theme-fancy .pill.time-pill{background:var(--fy-mint);color:var(--fy-outline);}
+  body.theme-fancy .mini-chips .pill, body.theme-fancy .mini-group-time .pill{padding:1px 7px;}
+
+  /* ---- FAB ---- */
+  body.theme-fancy .fab{
+    background:var(--fy-yellow);color:var(--fy-outline);
+    border:2.6px solid var(--fy-outline);
+    box-shadow:4px 4px 0 rgba(26,26,26,.3);
+    font-weight:700;
+  }
+
+  /* ---- Modales ---- */
+  body.theme-fancy .sheet{
+    border:2.6px solid var(--fy-outline);
+    box-shadow:4px 4px 0 rgba(26,26,26,.3);
+    background:var(--fy-white);
+  }
+  body.theme-fancy .overlay:not(.overlay-center) .sheet{border-bottom:none;}
+  body.theme-fancy .sheet-handle{background:rgba(26,26,26,.25);}
+  body.theme-fancy .sheet-head h2{font-weight:700;}
+  body.theme-fancy .tabnav button{font-weight:700;}
+  body.theme-fancy .field label{text-transform:uppercase;letter-spacing:.3px;font-size:11px;}
+  body.theme-fancy .field input[type=text], body.theme-fancy .field input[type=date], body.theme-fancy .field input[type=time], body.theme-fancy .field select, body.theme-fancy .field textarea{
+    border:2.2px solid var(--fy-outline);border-radius:14px;background:var(--fy-white);
+    font-family:inherit;font-weight:600;
+  }
+  body.theme-fancy .field input:focus, body.theme-fancy .field select:focus, body.theme-fancy .field textarea:focus{
+    outline:2px dotted var(--fy-outline);outline-offset:1px;
+  }
+  body.theme-fancy .field-today-btn{
+    border:2.2px solid var(--fy-outline);background:var(--fy-mint);color:var(--fy-outline);
+    border-radius:14px;font-weight:700;
+  }
+  body.theme-fancy .seg{border:2.2px solid var(--fy-outline);border-radius:14px;}
+  body.theme-fancy .seg button{background:var(--fy-white);color:var(--fy-outline);font-weight:700;border-right:2px solid var(--fy-outline);}
+  body.theme-fancy .seg button.active{background:var(--fy-pink);color:#fff;}
+  body.theme-fancy .weekday-picker button{
+    border:2px solid var(--fy-outline);background:var(--fy-white);color:var(--fy-outline);
+    border-radius:12px;font-weight:700;
+  }
+  body.theme-fancy .weekday-picker button.active{background:var(--fy-mint);color:var(--fy-outline);}
+  body.theme-fancy .swatch{border:2px solid var(--fy-outline);}
+  body.theme-fancy .swatch.active{box-shadow:0 0 0 3px var(--fy-yellow);}
+  body.theme-fancy .hint{font-weight:600;}
+  body.theme-fancy .btn{
+    border:2.4px solid var(--fy-outline);border-radius:16px;
+    box-shadow:3px 3px 0 rgba(26,26,26,.25);font-family:inherit;font-weight:700;
+  }
+  body.theme-fancy .btn-primary{background:var(--fy-yellow);color:var(--fy-outline);}
+  body.theme-fancy .btn-ghost{background:var(--fy-white);color:var(--fy-outline);}
+  body.theme-fancy .btn-danger{background:var(--fy-pink);color:#fff;}
+  body.theme-fancy .student-row, body.theme-fancy .student-check-row{
+    border:2.2px solid var(--fy-outline);border-radius:14px;background:var(--fy-white);
+    box-shadow:2px 2px 0 rgba(26,26,26,.16);
+  }
+  body.theme-fancy .student-row .dot, body.theme-fancy .student-check-row .dot{border:1.8px solid var(--fy-outline);}
+  body.theme-fancy .student-check-row .check{border:2px solid var(--fy-outline);}
+  body.theme-fancy .student-check-row.checked .check{background:var(--fy-mint);border-color:var(--fy-outline);color:var(--fy-outline);}
+  body.theme-fancy .avatar-circle{border:2.4px solid var(--fy-outline);}
+  body.theme-fancy .avatar-btn.selected .avatar-circle{box-shadow:0 0 0 3px var(--fy-yellow);}
+  body.theme-fancy .picker{border:2.2px solid var(--fy-outline);border-radius:14px;background:var(--fy-white);}
+  body.theme-fancy .empty-state{font-weight:700;color:rgba(26,26,26,.55);}
+
+  /* Sombra dura: el "press" se siente hundiendo el botón hacia su sombra */
+  body.theme-fancy .view-pill:active, body.theme-fancy .today-btn:active, body.theme-fancy .nav-btn:active, body.theme-fancy .btn:active, body.theme-fancy .fab:active, body.theme-fancy .student-chip:active{
+    transform:translate(2px,2px);box-shadow:0 0 0 rgba(26,26,26,0);
+  }
+  body.theme-fancy .fab:active{transform:translate(2px,2px) rotate(90deg);}
+  body.theme-fancy .view-pill.active{box-shadow:2px 2px 0 rgba(26,26,26,.3);}
+
+
+
+
+  body.theme-fancy .menu-row, body.theme-fancy .theme-row{
+    border:2.2px solid var(--fy-outline);background:var(--fy-white);
+    box-shadow:2px 2px 0 rgba(26,26,26,.18);border-radius:16px;
+  }
+  body.theme-fancy .menu-ico{border:2px solid var(--fy-outline);background:var(--fy-yellow);color:var(--fy-outline);}
+  body.theme-fancy .theme-check{border:2px solid var(--fy-outline);background:var(--fy-mint);color:var(--fy-outline);}
+  body.theme-fancy .theme-row.selected{box-shadow:0 0 0 3px var(--fy-yellow), 2px 2px 0 rgba(26,26,26,.25);}
+  body.theme-fancy .menu-row:active, body.theme-fancy .theme-row:active{
+    transform:translate(2px,2px);box-shadow:0 0 0 rgba(26,26,26,0);
+  }
+
+
+  /* ============================================================
+     TEMA "NEBULA SILVER" — se activa con body.theme-nebula
+     Consola de campo profundo: paneles de vidrio translucido con
+     borde brillante y halo, tipografia Orbitron/Rajdhani sobre
+     fondo casi negro con nebulosas plateadas.
+     ============================================================ */
+  body.theme-nebula{
+    --nb-border:rgba(255,255,255,.26);
+    --nb-border-b:rgba(255,255,255,.9);
+    --nb-glow:0 10px 30px rgba(0,0,8,.5), 0 0 22px rgba(154,160,168,.22);
+    --nb-panel:rgba(255,255,255,.055);
+
+    --bg:#0b0c0e;
+    --card:rgba(255,255,255,.055);
+    --card-head:rgba(255,255,255,.1);
+    --ink:#ffffff;
+    --ink-soft:rgba(255,255,255,.68);
+    --border:rgba(255,255,255,.14);
+    --accent:#eef3f7;
+    --accent-ink:#0b0c0e;
+    --danger:#ff6b6b;
+    --radius:16px;
+    --radius-sm:11px;
+    --today-ring:#eef3f7;
+    --shadow:0 10px 30px rgba(0,0,8,.5), 0 0 18px rgba(154,160,168,.18);
+
+    font-family:'Rajdhani','Segoe UI',Arial,sans-serif;
+    /* El color de fondo lo pone el scroll desde JS; estas nebulosas se
+       superponen como background-image y no lo pisan. */
+    background-image:
+      radial-gradient(ellipse 780px 560px at 8% -8%, rgba(255,255,255,.16), transparent 60%),
+      radial-gradient(ellipse 680px 520px at 98% 8%, rgba(210,215,222,.14), transparent 58%),
+      radial-gradient(ellipse 620px 480px at 26% 102%, rgba(255,255,255,.10), transparent 58%);
+    background-attachment:fixed;
+  }
+
+  /* -- Header -- */
+  body.theme-nebula .topbar{
+    border-bottom:1px solid var(--nb-border);
+    box-shadow:0 10px 26px rgba(0,0,8,.55);
+    background:rgba(11,12,14,.72);
+    -webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);
+  }
+  body.theme-nebula .topbar-band{border-bottom:1px solid rgba(255,255,255,.14);}
+  body.theme-nebula .nav-title{
+    font-family:'Orbitron',Arial,sans-serif;letter-spacing:1.2px;
+    text-transform:uppercase;font-size:13px;
+  }
+  body.theme-nebula .student-chip{
+    border:1.4px solid var(--nb-border-b);
+    box-shadow:0 0 14px rgba(238,243,247,.3);
+  }
+  body.theme-nebula .student-chip.selected{
+    box-shadow:0 0 0 2px #fff, 0 0 18px rgba(238,243,247,.65);
+  }
+  body.theme-nebula .icon-btn,
+  body.theme-nebula .font-scale-btn,
+  body.theme-nebula .topbar-band .icon-btn,
+  body.theme-nebula .topbar-band .font-scale-btn{
+    background:var(--nb-panel);border:1.4px solid var(--nb-border-b);color:#eef3f7;
+  }
+  body.theme-nebula .icon-btn:active,
+  body.theme-nebula .font-scale-btn:active{background:rgba(255,255,255,.18);}
+  body.theme-nebula .view-pill{
+    font-family:'Orbitron',Arial,sans-serif;font-size:10.5px;letter-spacing:1.4px;
+    background:var(--nb-panel);border:1px solid var(--nb-border);color:rgba(255,255,255,.8);
+  }
+  body.theme-nebula .view-pill.active{
+    background:rgba(154,160,168,.2);border-color:var(--nb-border-b);color:#fff;
+    box-shadow:0 0 16px rgba(238,243,247,.3);
+  }
+  body.theme-nebula .nav-btn{
+    background:var(--nb-panel);border:1px solid var(--nb-border);color:#eef3f7;
+  }
+  body.theme-nebula .today-btn{
+    background:var(--nb-panel);border:1px solid var(--nb-border-b);color:#eef3f7;
+    font-family:'Orbitron',Arial,sans-serif;font-size:10px;letter-spacing:1.2px;text-transform:uppercase;
+  }
+  body.theme-nebula .search-bar input{
+    background:var(--nb-panel);border:1px solid var(--nb-border);color:#fff;border-radius:18px;
+  }
+  body.theme-nebula .search-bar input::placeholder{color:rgba(255,255,255,.5);}
+  body.theme-nebula .search-result{
+    background:var(--nb-panel);border:1px solid var(--nb-border);
+    -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
+  }
+  body.theme-nebula .search-result mark{background:rgba(238,243,247,.28);color:#fff;}
+
+  /* -- Cards de vidrio con filo brillante -- */
+  body.theme-nebula .week-col,
+  body.theme-nebula .day-block{
+    position:relative;
+    background:linear-gradient(160deg, rgba(255,255,255,.075), rgba(255,255,255,.025));
+    border:1px solid var(--nb-border);
+    -webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);
+    box-shadow:var(--nb-glow);
+  }
+  body.theme-nebula .week-col::before,
+  body.theme-nebula .day-block::before{
+    content:"";position:absolute;top:0;left:16px;right:16px;height:1px;z-index:2;
+    background:linear-gradient(to right, transparent, var(--nb-border-b), transparent);
+  }
+  body.theme-nebula .week-col-head,
+  body.theme-nebula .day-block-head{border-bottom:1px solid rgba(255,255,255,.12);}
+  body.theme-nebula .week-col-head .mo,
+  body.theme-nebula .week-col-head .wd,
+  body.theme-nebula .mini-group-head{
+    font-family:'Orbitron',Arial,sans-serif;letter-spacing:1.1px;color:rgba(255,255,255,.62);
+  }
+  body.theme-nebula .week-col-head .dn{color:#fff;}
+  body.theme-nebula .week-col-head.is-today .dn{
+    background:rgba(238,243,247,.95);color:#0b0c0e;
+    box-shadow:0 0 16px rgba(238,243,247,.55);
+  }
+  body.theme-nebula .day-block-count{
+    background:rgba(255,255,255,.1);border:1px solid var(--nb-border);color:rgba(255,255,255,.8);
+  }
+  body.theme-nebula .period-block{border-bottom-color:rgba(255,255,255,.1);}
+
+  /* -- Eventos -- */
+  body.theme-nebula .mini-event{
+    background:rgba(255,255,255,.035);border-radius:10px;
+    border:1px solid rgba(255,255,255,.1);border-left-width:3px;
+  }
+  body.theme-nebula .mini-event:last-child{border-bottom:1px solid rgba(255,255,255,.1);}
+  body.theme-nebula .mini-event .t{color:#fff;}
+  body.theme-nebula .mini-empty{
+    border:1px dashed rgba(255,255,255,.18);border-radius:10px;color:rgba(255,255,255,.4);
+  }
+  body.theme-nebula .day-row{border-bottom:1px solid rgba(255,255,255,.08);}
+  body.theme-nebula .event-notes.comment-notes{color:rgba(255,255,255,.92);}
+  body.theme-nebula .pill{
+    background:rgba(255,255,255,.1);border:1px solid var(--nb-border);color:rgba(255,255,255,.85);
+  }
+  body.theme-nebula .pill.time-pill{background:rgba(238,243,247,.16);color:#eef3f7;}
+
+  /* -- FAB -- */
+  body.theme-nebula .fab{
+    background:rgba(238,243,247,.95);color:#0b0c0e;
+    border:1.4px solid #fff;
+    box-shadow:0 10px 30px rgba(0,0,8,.6), 0 0 26px rgba(238,243,247,.5);
+  }
+
+  /* -- Modales -- */
+  body.theme-nebula .overlay{background:rgba(4,5,7,.68);}
+  body.theme-nebula .sheet{
+    background:linear-gradient(160deg, rgba(32,34,38,.96), rgba(18,19,22,.97));
+    border:1px solid var(--nb-border);
+    -webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);
+    box-shadow:var(--nb-glow);
+  }
+  body.theme-nebula .sheet-head h2{
+    font-family:'Orbitron',Arial,sans-serif;font-size:14px;letter-spacing:1.2px;text-transform:uppercase;
+  }
+  body.theme-nebula .sheet-handle{background:rgba(255,255,255,.26);}
+  body.theme-nebula .sheet-close{color:rgba(255,255,255,.7);}
+  body.theme-nebula .field label{
+    font-family:'Orbitron',Arial,sans-serif;font-size:9.5px;letter-spacing:1.1px;
+    text-transform:uppercase;color:rgba(255,255,255,.55);
+  }
+  body.theme-nebula .field input[type=text],
+  body.theme-nebula .field input[type=date],
+  body.theme-nebula .field input[type=time],
+  body.theme-nebula .field select,
+  body.theme-nebula .field textarea{
+    background:rgba(255,255,255,.06);border:1px solid var(--nb-border);color:#fff;border-radius:11px;
+  }
+  body.theme-nebula .field input:focus,
+  body.theme-nebula .field select:focus,
+  body.theme-nebula .field textarea:focus{
+    border-color:var(--nb-border-b);outline:none;box-shadow:0 0 14px rgba(238,243,247,.22);
+  }
+  body.theme-nebula .field-today-btn{
+    background:rgba(255,255,255,.08);border:1px solid var(--nb-border-b);color:#eef3f7;
+  }
+  body.theme-nebula .seg{border:1px solid var(--nb-border);}
+  body.theme-nebula .seg button{
+    background:rgba(255,255,255,.05);color:rgba(255,255,255,.65);border-right-color:rgba(255,255,255,.12);
+  }
+  body.theme-nebula .seg button.active{background:rgba(238,243,247,.92);color:#0b0c0e;}
+  body.theme-nebula .weekday-picker button{
+    background:rgba(255,255,255,.05);border:1px solid var(--nb-border);color:rgba(255,255,255,.7);
+  }
+  body.theme-nebula .weekday-picker button.active{
+    background:rgba(238,243,247,.92);color:#0b0c0e;border-color:var(--nb-border-b);
+  }
+  body.theme-nebula .btn{border:1px solid var(--nb-border);}
+  body.theme-nebula .btn-primary{
+    background:rgba(238,243,247,.95);color:#0b0c0e;border-color:#fff;
+    box-shadow:0 0 18px rgba(238,243,247,.3);
+  }
+  body.theme-nebula .btn-ghost{background:rgba(255,255,255,.07);color:#fff;}
+  body.theme-nebula .btn-danger{background:rgba(255,107,107,.18);color:#ff8f8f;border-color:rgba(255,107,107,.5);}
+  body.theme-nebula .student-row,
+  body.theme-nebula .student-check-row,
+  body.theme-nebula .picker,
+  body.theme-nebula .menu-row,
+  body.theme-nebula .theme-row{
+    background:rgba(255,255,255,.055);border:1px solid var(--nb-border);
+  }
+  body.theme-nebula .menu-ico{background:rgba(255,255,255,.08);border:1px solid var(--nb-border);color:#eef3f7;}
+  body.theme-nebula .theme-check{background:rgba(238,243,247,.95);color:#0b0c0e;}
+  body.theme-nebula .theme-row.selected{border-color:var(--nb-border-b);box-shadow:0 0 16px rgba(238,243,247,.22);}
+  body.theme-nebula .student-check-row.checked .check{background:rgba(238,243,247,.92);border-color:#fff;color:#0b0c0e;}
+  body.theme-nebula .avatar-circle{border-color:rgba(255,255,255,.3);}
+  body.theme-nebula .avatar-btn.selected .avatar-circle{border-color:#fff;box-shadow:0 0 16px rgba(238,243,247,.5);}
+  body.theme-nebula .empty-state{color:rgba(255,255,255,.45);}
+  body.theme-nebula .hint{color:rgba(255,255,255,.5);}
+
+  /* ============================================================
+     TEMA "DARK BLUE" — se activa con body.theme-darkblue
+     Consola de analitica en azul marino profundo: superficies
+     planas (sin vidrio ni blur), un unico azul de acento, bordes
+     tenues y radios pequenos. Tipografia Roboto.
+     ============================================================ */
+  body.theme-darkblue{
+    --db-bg:#0d1f3c;
+    --db-bg2:#0a1830;
+    --db-panel:#123156;
+    --db-panel2:#1a3d6b;
+    --db-accent2:#7ab0e6;
+
+    --bg:#0d1f3c;
+    --card:#123156;
+    --card-head:#1a3d6b;
+    --ink:#f2f5f9;
+    --ink-soft:rgba(255,255,255,.62);
+    --border:rgba(255,255,255,.08);
+    --accent:#2f7bd6;
+    --accent-ink:#ffffff;
+    --danger:#e5534b;
+    --radius:8px;
+    --radius-sm:6px;
+    --today-ring:#2f7bd6;
+    --shadow:0 2px 10px rgba(0,0,8,.4);
+
+    font-family:'Roboto',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;
+  }
+
+  /* -- Header -- */
+  body.theme-darkblue .topbar{
+    border-bottom:1px solid rgba(255,255,255,.08);
+    box-shadow:0 2px 12px rgba(0,0,8,.45);
+  }
+  body.theme-darkblue .topbar-band{border-bottom:1px solid rgba(255,255,255,.08);}
+  body.theme-darkblue .nav-title{font-weight:500;letter-spacing:.3px;}
+  body.theme-darkblue .student-chip{
+    border:1.5px solid rgba(255,255,255,.16);box-shadow:none;
+  }
+  body.theme-darkblue .student-chip.selected{
+    box-shadow:0 0 0 2px var(--db-accent2);transform:scale(1.04);
+  }
+  body.theme-darkblue .icon-btn,
+  body.theme-darkblue .font-scale-btn,
+  body.theme-darkblue .topbar-band .icon-btn,
+  body.theme-darkblue .topbar-band .font-scale-btn{
+    background:var(--db-panel2);border:1px solid rgba(255,255,255,.16);color:#f2f5f9;
+  }
+  body.theme-darkblue .icon-btn:active,
+  body.theme-darkblue .font-scale-btn:active{background:var(--db-accent);}
+  body.theme-darkblue .view-pill{
+    background:var(--db-bg2);border:1px solid rgba(255,255,255,.08);color:rgba(255,255,255,.62);
+    font-weight:500;letter-spacing:.4px;
+  }
+  body.theme-darkblue .view-pill.active{
+    background:var(--db-accent);border-color:var(--db-accent);color:#fff;box-shadow:none;
+  }
+  body.theme-darkblue .nav-btn{
+    background:var(--db-panel2);border:1px solid rgba(255,255,255,.08);color:#f2f5f9;
+  }
+  body.theme-darkblue .today-btn{
+    background:transparent;border:1px solid rgba(255,255,255,.16);color:var(--db-accent2);
+    font-weight:500;
+  }
+  body.theme-darkblue .search-bar input{
+    background:var(--db-bg2);border:1px solid rgba(255,255,255,.08);color:#fff;border-radius:6px;
+  }
+  body.theme-darkblue .search-bar input::placeholder{color:rgba(255,255,255,.38);}
+  body.theme-darkblue .search-bar input:focus{
+    border-color:var(--db-accent2);outline:none;box-shadow:0 0 0 3px rgba(122,176,230,.16);
+  }
+  body.theme-darkblue .search-result{
+    background:var(--db-panel);border:1px solid rgba(255,255,255,.08);box-shadow:none;
+  }
+  body.theme-darkblue .search-result mark{background:rgba(47,123,214,.4);color:#fff;}
+
+  /* -- Cards planas -- */
+  body.theme-darkblue .week-col,
+  body.theme-darkblue .day-block{
+    background:var(--db-panel);border:1px solid rgba(255,255,255,.08);
+    box-shadow:0 2px 10px rgba(0,0,8,.35);
+  }
+  body.theme-darkblue .week-col-head,
+  body.theme-darkblue .day-block-head{border-bottom:1px solid rgba(255,255,255,.08);}
+  body.theme-darkblue .week-col-head .mo,
+  body.theme-darkblue .week-col-head .wd,
+  body.theme-darkblue .mini-group-head{color:rgba(255,255,255,.55);font-weight:500;}
+  body.theme-darkblue .week-col-head .dn{color:#f2f5f9;}
+  body.theme-darkblue .week-col-head.is-today .dn{background:var(--db-accent);color:#fff;}
+  body.theme-darkblue .day-block-count{
+    background:var(--db-bg2);border:1px solid rgba(255,255,255,.08);color:var(--db-accent2);
+  }
+  body.theme-darkblue .period-block{border-bottom-color:rgba(255,255,255,.08);}
+
+  /* -- Eventos -- */
+  body.theme-darkblue .mini-event{
+    background:var(--db-bg2);border:1px solid rgba(255,255,255,.06);
+    border-left-width:3px;border-radius:6px;
+  }
+  body.theme-darkblue .mini-event:last-child{border-bottom:1px solid rgba(255,255,255,.06);}
+  body.theme-darkblue .mini-event .t{color:#f2f5f9;}
+  body.theme-darkblue .mini-empty{
+    border:1px dashed rgba(255,255,255,.14);border-radius:6px;color:rgba(255,255,255,.34);
+  }
+  body.theme-darkblue .day-row{border-bottom:1px solid rgba(255,255,255,.06);}
+  body.theme-darkblue .event-notes.comment-notes{color:#f2f5f9;}
+  body.theme-darkblue .pill{
+    background:var(--db-bg2);border:1px solid rgba(255,255,255,.08);color:rgba(255,255,255,.7);
+  }
+  body.theme-darkblue .pill.time-pill{background:rgba(47,123,214,.2);color:var(--db-accent2);}
+
+  /* -- FAB -- */
+  body.theme-darkblue .fab{
+    background:#3b8ae8;color:#fff;border:1px solid rgba(255,255,255,.28);
+    box-shadow:0 8px 22px rgba(0,0,8,.6), 0 0 0 4px rgba(47,123,214,.18);
+  }
+
+  /* -- Modales -- */
+  body.theme-darkblue .overlay{background:rgba(4,8,18,.62);}
+  body.theme-darkblue .sheet{
+    background:var(--db-panel);border:1px solid rgba(255,255,255,.08);
+    box-shadow:0 18px 44px rgba(0,0,8,.6);
+  }
+  body.theme-darkblue .sheet-head h2{font-weight:500;}
+  body.theme-darkblue .sheet-handle{background:rgba(255,255,255,.18);}
+  body.theme-darkblue .sheet-close{color:rgba(255,255,255,.55);}
+  body.theme-darkblue .field label{
+    font-size:10.5px;letter-spacing:.3px;text-transform:uppercase;color:rgba(255,255,255,.38);
+    font-weight:500;
+  }
+  body.theme-darkblue .field input[type=text],
+  body.theme-darkblue .field input[type=date],
+  body.theme-darkblue .field input[type=time],
+  body.theme-darkblue .field select,
+  body.theme-darkblue .field textarea{
+    background:var(--db-bg2);border:1px solid rgba(255,255,255,.08);color:#fff;border-radius:6px;
+  }
+  body.theme-darkblue .field input:focus,
+  body.theme-darkblue .field select:focus,
+  body.theme-darkblue .field textarea:focus{
+    border-color:var(--db-accent2);outline:none;box-shadow:0 0 0 3px rgba(122,176,230,.16);
+  }
+  body.theme-darkblue .field-today-btn{
+    background:var(--db-panel2);border:1px solid rgba(255,255,255,.16);color:var(--db-accent2);
+    border-radius:6px;
+  }
+  body.theme-darkblue .seg{border:1px solid rgba(255,255,255,.08);border-radius:6px;}
+  body.theme-darkblue .seg button{
+    background:var(--db-bg2);color:rgba(255,255,255,.62);border-right-color:rgba(255,255,255,.08);
+  }
+  body.theme-darkblue .seg button.active{background:var(--db-accent);color:#fff;}
+  body.theme-darkblue .weekday-picker button{
+    background:var(--db-bg2);border:1px solid rgba(255,255,255,.08);color:rgba(255,255,255,.62);
+    border-radius:6px;
+  }
+  body.theme-darkblue .weekday-picker button.active{
+    background:var(--db-accent);color:#fff;border-color:var(--db-accent);
+  }
+  body.theme-darkblue .btn{border:1px solid rgba(255,255,255,.08);border-radius:16px;}
+  body.theme-darkblue .btn-primary{background:var(--db-accent);color:#fff;border-color:var(--db-accent);}
+  body.theme-darkblue .btn-ghost{
+    background:transparent;color:rgba(255,255,255,.72);border-color:rgba(255,255,255,.16);
+  }
+  body.theme-darkblue .btn-danger{
+    background:rgba(229,83,75,.16);color:#f08a84;border-color:rgba(229,83,75,.4);
+  }
+  body.theme-darkblue .student-row,
+  body.theme-darkblue .student-check-row,
+  body.theme-darkblue .picker,
+  body.theme-darkblue .menu-row,
+  body.theme-darkblue .theme-row{
+    background:var(--db-bg2);border:1px solid rgba(255,255,255,.08);border-radius:6px;
+  }
+  body.theme-darkblue .menu-ico{
+    background:var(--db-panel2);border:1px solid rgba(255,255,255,.08);color:var(--db-accent2);
+  }
+  body.theme-darkblue .theme-check{background:var(--db-accent);color:#fff;}
+  body.theme-darkblue .theme-row.selected{
+    border-color:var(--db-accent2);box-shadow:0 0 0 3px rgba(122,176,230,.16);
+  }
+  body.theme-darkblue .student-check-row.checked .check{
+    background:var(--db-accent);border-color:var(--db-accent);color:#fff;
+  }
+  body.theme-darkblue .avatar-circle{border-color:rgba(255,255,255,.18);}
+  body.theme-darkblue .avatar-btn.selected .avatar-circle{border-color:var(--db-accent2);}
+  body.theme-darkblue .empty-state{color:rgba(255,255,255,.38);}
+  body.theme-darkblue .hint{color:rgba(255,255,255,.45);}
+
   ::-webkit-scrollbar{width:0;height:0;}
 </style>
 </head>
 <body>
+<script>
+  /* Se aplica el tema guardado antes del primer pintado para evitar parpadeo. */
+  (function(){
+    try{
+      var t = localStorage.getItem("calendarioEscolarTheme_v1");
+      var cls = {fancy:"theme-fancy", nebula:"theme-nebula", darkblue:"theme-darkblue"}[t];
+      if(cls) document.body.classList.add(cls);
+    }catch(e){}
+  })();
+</script>
 
 <div class="topbar">
   <div class="topbar-band">
@@ -471,7 +1181,7 @@
         <button type="button" class="font-scale-btn" id="btnFontDown" title="Reducir tamaño de texto">A-</button>
         <button type="button" class="font-scale-btn" id="btnFontUp" title="Aumentar tamaño de texto">A+</button>
       </div>
-      <button class="icon-btn" id="btnStudents" title="Estudiantes"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20.5c0-4.1 3.6-6.5 8-6.5s8 2.4 8 6.5"/></svg></button>
+      <button class="icon-btn" id="btnSettings" title="Ajustes"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 14.5a1.6 1.6 0 0 0 .32 1.77l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.6 1.6 0 0 0-1.77-.32 1.6 1.6 0 0 0-.97 1.47V21a2 2 0 1 1-4 0v-.1a1.6 1.6 0 0 0-1.05-1.46 1.6 1.6 0 0 0-1.77.32l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.6 1.6 0 0 0 .32-1.77 1.6 1.6 0 0 0-1.47-.97H3a2 2 0 1 1 0-4h.1a1.6 1.6 0 0 0 1.46-1.05 1.6 1.6 0 0 0-.32-1.77l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.6 1.6 0 0 0 1.77.32H9a1.6 1.6 0 0 0 .97-1.47V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 .97 1.47 1.6 1.6 0 0 0 1.77-.32l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.6 1.6 0 0 0-.32 1.77V9a1.6 1.6 0 0 0 1.47.97H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.47.97z"/></svg></button>
     </div>
   </div>
   <div class="topbar-main">
@@ -652,6 +1362,62 @@
   </div>
 </div>
 
+<!-- Settings menu -->
+<div class="overlay overlay-center" id="settingsOverlay" style="z-index:60;">
+  <div class="sheet" style="max-width:360px;">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head">
+      <h2>Ajustes</h2>
+      <button class="sheet-close" id="settingsClose"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5l14 14"/><path d="M19 5L5 19"/></svg></button>
+    </div>
+    <div class="sheet-body">
+      <button class="menu-row" id="btnOpenThemes">
+        <span class="menu-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r="1.6"/><circle cx="18" cy="11.5" r="1.6"/><circle cx="6.5" cy="9.5" r="1.6"/><circle cx="9" cy="15.5" r="1.6"/><path d="M12 3a9 9 0 1 0 0 18c1 0 1.7-.8 1.7-1.7 0-.5-.2-.9-.5-1.2-.3-.3-.5-.7-.5-1.1 0-.9.8-1.7 1.7-1.7H16a5 5 0 0 0 5-5c0-4-4-7.3-9-7.3z"/></svg></span>
+        <span class="menu-txt"><span class="menu-title">Cambiar tema</span><span class="menu-sub" id="menuThemeSub">Original</span></span>
+        <span class="menu-arrow">›</span>
+      </button>
+      <button class="menu-row" id="btnOpenStudents">
+        <span class="menu-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20.5c0-4.1 3.6-6.5 8-6.5s8 2.4 8 6.5"/></svg></span>
+        <span class="menu-txt"><span class="menu-title">Agregar estudiante</span><span class="menu-sub" id="menuStudentsSub">Sin estudiantes</span></span>
+        <span class="menu-arrow">›</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Theme picker -->
+<div class="overlay overlay-center" id="themeOverlay" style="z-index:65;">
+  <div class="sheet" style="max-width:380px;">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head">
+      <h2>Tema</h2>
+      <button class="sheet-close" id="themeClose"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5l14 14"/><path d="M19 5L5 19"/></svg></button>
+    </div>
+    <div class="sheet-body">
+      <button class="theme-row" data-theme="original">
+        <span class="theme-prev theme-prev-original"><i></i><i></i><i></i></span>
+        <span class="theme-txt"><span class="theme-name">Original</span><span class="theme-desc">Limpio y suave, pasteles claros</span></span>
+        <span class="theme-check">&#10003;</span>
+      </button>
+      <button class="theme-row" data-theme="fancy">
+        <span class="theme-prev theme-prev-fancy"><i></i><i></i><i></i></span>
+        <span class="theme-txt"><span class="theme-name">Fancy</span><span class="theme-desc">Y2K: contornos negros y colores vivos</span></span>
+        <span class="theme-check">&#10003;</span>
+      </button>
+      <button class="theme-row" data-theme="nebula">
+        <span class="theme-prev theme-prev-nebula"><i></i><i></i><i></i></span>
+        <span class="theme-txt"><span class="theme-name">Nebula Silver</span><span class="theme-desc">Oscuro, vidrio y filos plateados</span></span>
+        <span class="theme-check">&#10003;</span>
+      </button>
+      <button class="theme-row" data-theme="darkblue">
+        <span class="theme-prev theme-prev-darkblue"><i></i><i></i><i></i></span>
+        <span class="theme-txt"><span class="theme-name">Dark Blue</span><span class="theme-desc">Azul marino plano, estilo consola</span></span>
+        <span class="theme-check">&#10003;</span>
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- Students modal -->
 <div class="overlay" id="studentsOverlay">
   <div class="sheet">
@@ -700,13 +1466,13 @@
   var STORAGE_KEY = "calendarioEscolarData_v1";
   var PALETTE = ["#4f6df5","#ef6a6a","#f5a623","#2bb673","#9b59e0","#17a2b8","#e5579f","#6d6875"];
   var ALL_COLOR = "#3a3d46";
-  var WEEK_PASTEL = ["#ffe1e6","#d7f0f2","#ffe3e3","#e7f6d8","#f2dafb","#ffe9d6","#d9e8fb","#e8e4d8","#d8f3e6","#fbdff0","#fff6cf","#e1dffb"];
   var WEEK_PASTEL_EPOCH = new Date(2020,0,6); // lunes de referencia
   function weekPastelColor(weekStart){
+    var pal = themeCfg().pastel;
     var diffDays = Math.round((weekStart - WEEK_PASTEL_EPOCH) / 86400000);
     var weekNum = Math.floor(diffDays / 7);
-    var idx = ((weekNum % WEEK_PASTEL.length) + WEEK_PASTEL.length) % WEEK_PASTEL.length;
-    return WEEK_PASTEL[idx];
+    var idx = ((weekNum % pal.length) + pal.length) % pal.length;
+    return pal[idx];
   }
   function weekNumberOf(date){
     return Math.floor(Math.round((startOfWeekMonday(date) - WEEK_PASTEL_EPOCH) / 86400000) / 7);
@@ -756,8 +1522,14 @@
   }
   /* Fondo de la app: el tono va cambiando de forma continua según el scroll / la semana visible */
   function applyBgPosition(pos){
+    var cfg = themeCfg();
     var hue = ((pos * 150) % 360 + 360) % 360;
-    document.body.style.backgroundColor = "hsl(" + hue.toFixed(1) + ",48%,78%)";
+    /* Los temas oscuros acotan el giro de matiz a su familia de color, para
+       que el fondo no se salga de su identidad al scrollear. */
+    if(cfg.hueRange != null){
+      hue = (cfg.hueBase + (hue / 360) * cfg.hueRange) % 360;
+    }
+    document.body.style.backgroundColor = "hsl(" + hue.toFixed(1) + "," + cfg.bgSat + "%," + cfg.bgLight + "%)";
   }
   function updateScrollBackground(){
     if(state.view!=="week" || !contState.blocks.length){
@@ -854,6 +1626,74 @@
     currentFontScale = scale;
     document.documentElement.style.zoom = scale;
     saveFontScale(scale);
+  }
+
+  /* ============ Temas ============ */
+  var THEME_KEY = "calendarioEscolarTheme_v1";
+  var THEMES = {
+    original: {
+      name: "Original",
+      cls: null,
+      /* Pasteles suaves, ordenados para máximo contraste entre semanas seguidas */
+      pastel: ["#ffe1e6","#d7f0f2","#ffe3e3","#e7f6d8","#f2dafb","#ffe9d6","#d9e8fb","#e8e4d8","#d8f3e6","#fbdff0","#fff6cf","#e1dffb"],
+      bgSat: 48, bgLight: 78,
+      headSat: 32,
+      bandAngle: 115, bandSpread: 18,
+      bandSat: [62,68,62], bandLight: [58,54,58]
+    },
+    fancy: {
+      name: "Fancy",
+      cls: "theme-fancy",
+      /* Pasteles Y2K: rosa, menta, amarillo y lavanda alternados */
+      pastel: ["#fbb6d2","#d8f0a8","#f9e977","#cfc0f0","#f9a8cb","#c3ea86","#ffe9a3","#bda9ec","#f7c5dd","#e0f5bb","#f5e14a","#d3c6f5"],
+      bgSat: 72, bgLight: 83,
+      headSat: 22,
+      bandAngle: 100, bandSpread: 30,
+      bandSat: [80,76,84], bandLight: [74,70,72]
+    },
+    nebula: {
+      name: "Nebula Silver",
+      cls: "theme-nebula",
+      /* Tintes translucidos (hex de 8 digitos) sobre el vidrio oscuro */
+      pastel: ["#bfc7cf1f","#dbdbdb14","#abb3c41c","#d6d1cd12","#e2e7e918","#bdbdbd10","#c4c4d41a","#e3e0de16","#b6cace20","#d6d6d613","#a8abbd1e","#edebe811"],
+      bgSat: 10, bgLight: 6,
+      hueBase: 205, hueRange: 40,
+      headSat: 9, headLight: 13,
+      bandAngle: 115, bandSpread: 24,
+      bandSat: [10,8,12], bandLight: [15,12,17]
+    },
+    darkblue: {
+      name: "Dark Blue",
+      cls: "theme-darkblue",
+      /* Variantes de azul marino: el matiz rota y la luminosidad alterna */
+      pastel: ["#16365a","#0e3144","#1e3467","#11354f","#19275d","#0b3141","#213c69","#11214a","#1b4764","#0e2249","#24496b","#132e53"],
+      bgSat: 50, bgLight: 13,
+      hueBase: 206, hueRange: 36,
+      headSat: 58, headLight: 19,
+      bandAngle: 115, bandSpread: 20,
+      bandSat: [55,60,50], bandLight: [20,17,22]
+    }
+  };
+  function loadTheme(){
+    try{
+      var t = localStorage.getItem(THEME_KEY);
+      if(THEMES[t]) return t;
+    }catch(e){}
+    return "original";
+  }
+  var currentTheme = loadTheme();
+  function themeCfg(){ return THEMES[currentTheme] || THEMES.original; }
+  function applyTheme(name, persist){
+    if(!THEMES[name]) name = "original";
+    currentTheme = name;
+    Object.keys(THEMES).forEach(function(k){
+      var cls = THEMES[k].cls;
+      if(cls) document.body.classList.toggle(cls, k === name);
+    });
+    if(persist){
+      try{ localStorage.setItem(THEME_KEY, name); }catch(e){}
+    }
+    render();
   }
 
   function loadData(){
@@ -1074,14 +1914,20 @@
   var topbarBand = document.querySelector(".topbar-band");
   function applyHeaderWeekColor(){
     var base = weekPastelColor(startOfWeekMonday(state.currentDate));
-    topbarMain.style.background = saturateHex(base, 32);
+    var cfg = themeCfg();
     var rgb = hexToRgb(base);
     var hsl = rgbToHsl(rgb[0], rgb[1], rgb[2]);
     var hue = hsl[0];
-    var c1 = hslToHex(((hue - 18) + 360) % 360, 62, 58);
-    var c2 = hslToHex(hue, 68, 54);
-    var c3 = hslToHex((hue + 18) % 360, 62, 58);
-    topbarBand.style.background = "linear-gradient(115deg,"+c1+" 0%,"+c2+" 48%,"+c3+" 100%)";
+    /* headLight fija la luminosidad en vez de heredarla del pastel: los temas
+       oscuros lo usan para que el header no salga claro. */
+    topbarMain.style.background = (cfg.headLight != null)
+      ? hslToHex(hue, cfg.headSat, cfg.headLight)
+      : saturateHex(base, cfg.headSat);
+    var sp = cfg.bandSpread;
+    var c1 = hslToHex(((hue - sp) + 360) % 360, cfg.bandSat[0], cfg.bandLight[0]);
+    var c2 = hslToHex(hue, cfg.bandSat[1], cfg.bandLight[1]);
+    var c3 = hslToHex((hue + sp) % 360, cfg.bandSat[2], cfg.bandLight[2]);
+    topbarBand.style.background = "linear-gradient("+cfg.bandAngle+"deg,"+c1+" 0%,"+c2+" 50%,"+c3+" 100%)";
   }
 
   function timeLabel(ev){
@@ -1554,7 +2400,52 @@
     resetStudentForm();
     studentsOverlay.classList.add("open");
   }
-  document.getElementById("btnStudents").addEventListener("click", openStudentsModal);
+  /* ============ Ajustes: menú + selector de tema ============ */
+  var settingsOverlay = document.getElementById("settingsOverlay");
+  var themeOverlay = document.getElementById("themeOverlay");
+  function closeSettings(){ settingsOverlay.classList.remove("open"); }
+  function closeThemePicker(){ themeOverlay.classList.remove("open"); }
+
+  function openSettings(){
+    document.getElementById("menuThemeSub").textContent = themeCfg().name;
+    var n = DATA.students.length;
+    document.getElementById("menuStudentsSub").textContent =
+      n === 0 ? "Sin estudiantes" : (n === 1 ? "1 estudiante" : n + " estudiantes");
+    settingsOverlay.classList.add("open");
+  }
+  function openThemePicker(){
+    document.querySelectorAll(".theme-row").forEach(function(row){
+      row.classList.toggle("selected", row.getAttribute("data-theme") === currentTheme);
+    });
+    themeOverlay.classList.add("open");
+  }
+
+  document.getElementById("btnSettings").addEventListener("click", openSettings);
+  document.getElementById("settingsClose").addEventListener("click", closeSettings);
+  settingsOverlay.addEventListener("click", function(e){ if(e.target===settingsOverlay) closeSettings(); });
+
+  document.getElementById("btnOpenThemes").addEventListener("click", function(){
+    closeSettings();
+    openThemePicker();
+  });
+  document.getElementById("btnOpenStudents").addEventListener("click", function(){
+    closeSettings();
+    openStudentsModal();
+  });
+
+  document.getElementById("themeClose").addEventListener("click", closeThemePicker);
+  themeOverlay.addEventListener("click", function(e){ if(e.target===themeOverlay) closeThemePicker(); });
+  document.querySelectorAll(".theme-row").forEach(function(row){
+    row.addEventListener("click", function(){
+      var name = row.getAttribute("data-theme");
+      document.querySelectorAll(".theme-row").forEach(function(r){
+        r.classList.toggle("selected", r === row);
+      });
+      applyTheme(name, true);
+      /* Se deja ver la marca de selección antes de cerrar. */
+      setTimeout(closeThemePicker, 260);
+    });
+  });
   document.getElementById("studentsClose").addEventListener("click", function(){ studentsOverlay.classList.remove("open"); });
   studentsOverlay.addEventListener("click", function(e){ if(e.target===studentsOverlay) studentsOverlay.classList.remove("open"); });
   document.getElementById("btnCancelEditStudent").addEventListener("click", resetStudentForm);
