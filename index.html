@@ -637,6 +637,21 @@
   </div>
 </div>
 
+<!-- Delete scope modal (evento de Todos/Ambos) -->
+<div class="overlay overlay-center" id="deleteScopeOverlay" style="z-index:70;">
+  <div class="sheet" style="max-width:380px;">
+    <div class="sheet-handle"></div>
+    <div class="sheet-body" style="padding-top:16px;">
+      <p class="hint" id="deleteScopeText" style="font-size:13.5px;margin:0 0 14px;"></p>
+      <div class="btn-row" style="flex-direction:column;">
+        <button class="btn btn-ghost" id="btnDeleteOnlyStudent" style="margin-bottom:10px;width:100%;"></button>
+        <button class="btn btn-danger" id="btnDeleteForEveryone" style="margin-bottom:10px;width:100%;"></button>
+        <button class="btn btn-ghost" id="btnDeleteScopeCancel" style="width:100%;">Cancelar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Students modal -->
 <div class="overlay" id="studentsOverlay">
   <div class="sheet">
@@ -907,7 +922,11 @@
     var out = [];
     evs.forEach(function(ev){
       if(ev.studentId==="all"){
-        ids.forEach(function(sid){ out.push({ev:ev, sid:sid}); });
+        var excl = ev.excludedStudents || [];
+        ids.forEach(function(sid){
+          if(excl.indexOf(sid)!==-1) return; // eliminado solo para este estudiante
+          out.push({ev:ev, sid:sid});
+        });
       }else{
         out.push({ev:ev, sid:ev.studentId});
       }
@@ -1152,7 +1171,7 @@
       + '<div class="day-block-head">'
       +   '<span class="day-block-avatar" style="background:'+lbl.color+'">'+lbl.inner+'</span>'
       +   '<span class="day-block-name">'+escapeHtml(lbl.name)+'</span>'
-      +   (horarioEv ? '<span class="day-block-time" data-id="'+horarioEv.id+'" data-occ="'+occDate+'">'+timeChipsHtml(horarioEv)+'</span>' : '')
+      +   (horarioEv ? '<span class="day-block-time" data-id="'+horarioEv.id+'" data-occ="'+occDate+'" data-student="'+(studentId||"")+'">'+timeChipsHtml(horarioEv)+'</span>' : '')
       +   '<span class="day-block-count">'+displayEvs.length+'</span>'
       + '</div>'
       + (rows ? '<div class="day-block-body">'+rows+'</div>' : '')
@@ -1163,7 +1182,7 @@
     var color = eventColor(ev, contextStudentId);
     var subHtml = (ev.kind==="weekly" ? '<span class="pill">'+ICON_REPEAT+(ev.weekdays || [ev.weekday]).map(function(wd){return WD_NAMES[wd];}).join(", ")+'</span>' : '')
       + (ev.kind==="daily" ? '<span class="pill">'+ICON_REPEAT+'Rango</span>' : '');
-    return '<div class="day-row" data-id="'+ev.id+'" data-occ="'+occDate+'">'
+    return '<div class="day-row" data-id="'+ev.id+'" data-occ="'+occDate+'" data-student="'+(contextStudentId||"")+'">'
       +   (ev.title ? '<p class="day-row-title"><span class="dot" style="background:'+color+'"></span>'+escapeHtml(ev.title)+'</p>' : '')
       +   (subHtml ? '<div class="event-sub">'+subHtml+'</div>' : '')
       +   (ev.notes? '<div class="event-notes'+(ev.commentOnly ? ' comment-notes' : '')+'">'+escapeHtml(ev.notes)+'</div>' : '')
@@ -1173,12 +1192,12 @@
   function bindEventCardClicks(){
     viewWrap.querySelectorAll(".day-row").forEach(function(row){
       row.addEventListener("click", function(){
-        openEventModal(row.getAttribute("data-id"), null, row.getAttribute("data-occ"));
+        openEventModal(row.getAttribute("data-id"), null, row.getAttribute("data-occ"), row.getAttribute("data-student"));
       });
     });
     viewWrap.querySelectorAll(".day-block-time").forEach(function(chip){
       chip.addEventListener("click", function(){
-        openEventModal(chip.getAttribute("data-id"), null, chip.getAttribute("data-occ"));
+        openEventModal(chip.getAttribute("data-id"), null, chip.getAttribute("data-occ"), chip.getAttribute("data-student"));
       });
     });
   }
@@ -1214,14 +1233,14 @@
         if(showHead){
           html += '<div class="mini-group-head">'
             + ((showGroupHeads||lbl.isAll) ? '<span class="mini-avatar" style="background:'+lbl.color+'">'+lbl.inner+'</span>'+escapeHtml(lbl.name) : '')
-            + (horarioEv ? '<span class="mini-group-time" data-id="'+horarioEv.id+'" data-occ="'+toYMD(d)+'">'+timeChipsHtml(horarioEv)+'</span>' : '')
+            + (horarioEv ? '<span class="mini-group-time" data-id="'+horarioEv.id+'" data-occ="'+toYMD(d)+'" data-student="'+(g.id||"")+'">'+timeChipsHtml(horarioEv)+'</span>' : '')
             + '</div>';
         }
         displayEvs.forEach(function(ev){
           var color = eventColor(ev, g.id);
           var chips = (ev.start || ev.end) ? timeChipsHtml(ev) : '';
           var label = miniDisplayLabel(ev);
-          html += '<div class="mini-event" style="border-left-color:'+color+'" data-id="'+ev.id+'" data-occ="'+toYMD(d)+'">'
+          html += '<div class="mini-event" style="border-left-color:'+color+'" data-id="'+ev.id+'" data-occ="'+toYMD(d)+'" data-student="'+(g.id||"")+'">'
             + (label ? '<span class="t">'+(!ev.commentOnly ? '<span class="dot" style="background:'+color+'"></span>' : '')+label+'</span>' : '')
             + (chips ? '<span class="mini-chips">'+chips+'</span>' : '')
             + '</div>';
@@ -1398,9 +1417,9 @@
   viewWrap.addEventListener("click", function(e){
     if(state.view!=="week") return;
     var mini = e.target.closest(".mini-event");
-    if(mini){ openEventModal(mini.getAttribute("data-id"), null, mini.getAttribute("data-occ")); return; }
+    if(mini){ openEventModal(mini.getAttribute("data-id"), null, mini.getAttribute("data-occ"), mini.getAttribute("data-student")); return; }
     var timeChip = e.target.closest(".mini-group-time");
-    if(timeChip){ openEventModal(timeChip.getAttribute("data-id"), null, timeChip.getAttribute("data-occ")); return; }
+    if(timeChip){ openEventModal(timeChip.getAttribute("data-id"), null, timeChip.getAttribute("data-occ"), timeChip.getAttribute("data-student")); return; }
     var empty = e.target.closest(".mini-empty");
     if(empty){ openEventModal(null, fromYMD(empty.getAttribute("data-empty-date"))); return; }
     var head = e.target.closest(".week-col-head");
@@ -1565,6 +1584,7 @@
   var currentKind = "single";
   var currentWeekdays = [1];
   var currentOccurrenceDate = null;
+  var currentContextStudentId = null; // estudiante bajo cuya card se abrió el evento
 
   var f_title = document.getElementById("f_title");
   var f_student = document.getElementById("f_student");
@@ -1678,7 +1698,7 @@
     b.addEventListener("click", function(){ setEventTab(b.getAttribute("data-tab")); });
   });
 
-  function openEventModal(id, prefDate, occurrenceDate){
+  function openEventModal(id, prefDate, occurrenceDate, contextStudentId){
     if(DATA.students.length===0){
       showAppAlert("Primero agrega un estudiante.", function(){ openStudentsModal(); });
       return;
@@ -1686,17 +1706,18 @@
     var evForAllCheck = id ? DATA.events.find(function(e){return e.id===id;}) : null;
     if(evForAllCheck && evForAllCheck.studentId==="all"){
       showAppConfirm('Este evento está asignado a '+allLabel()+', no solo a un estudiante. ¿Deseas continuar editándolo?', function(){
-        proceedOpenEventModal(id, prefDate, occurrenceDate);
+        proceedOpenEventModal(id, prefDate, occurrenceDate, contextStudentId);
       });
       return;
     }
-    proceedOpenEventModal(id, prefDate, occurrenceDate);
+    proceedOpenEventModal(id, prefDate, occurrenceDate, contextStudentId);
   }
 
-  function proceedOpenEventModal(id, prefDate, occurrenceDate){
+  function proceedOpenEventModal(id, prefDate, occurrenceDate, contextStudentId){
     fillStudentSelectForForm();
     editingId = id || null;
     currentOccurrenceDate = occurrenceDate || null;
+    currentContextStudentId = (contextStudentId && contextStudentId!=="all" && getStudent(contextStudentId)) ? contextStudentId : null;
     document.getElementById("eventModalTitle").textContent = editingId ? "Editar evento" : "Nuevo evento";
     document.getElementById("btnDeleteEvent").style.display = editingId ? "block" : "none";
 
@@ -1745,7 +1766,7 @@
   document.getElementById("eventClose").addEventListener("click", closeEventModal);
   document.getElementById("btnCancelEvent").addEventListener("click", closeEventModal);
   eventOverlay.addEventListener("click", function(e){ if(e.target===eventOverlay) closeEventModal(); });
-  function closeEventModal(){ eventOverlay.classList.remove("open"); editingId=null; currentOccurrenceDate=null; }
+  function closeEventModal(){ eventOverlay.classList.remove("open"); editingId=null; currentOccurrenceDate=null; currentContextStudentId=null; }
 
   document.getElementById("btnSaveEvent").addEventListener("click", function(){
     var rawTitle = f_title.value.trim();
@@ -1757,6 +1778,7 @@
     var studentId = f_student.value;
     if(!studentId){ showAppAlert("Selecciona un estudiante."); return; }
 
+    var prevEv = editingId ? DATA.events.find(function(e){return e.id===editingId;}) : null;
     var ev = {
       id: editingId || uid(),
       title: title,
@@ -1767,6 +1789,12 @@
       notes: notesVal,
       commentOnly: commentOnly
     };
+    /* Se conservan las exclusiones ya hechas (días sueltos de una cadena y
+       estudiantes para los que se eliminó un evento de Todos/Ambos). */
+    if(prevEv){
+      if(prevEv.excludedDates) ev.excludedDates = prevEv.excludedDates.slice();
+      if(prevEv.excludedStudents && studentId==="all") ev.excludedStudents = prevEv.excludedStudents.slice();
+    }
 
     if(currentKind==="single"){
       if(!f_date.value){ showAppAlert("Selecciona una fecha."); return; }
@@ -1819,9 +1847,61 @@
 
   function closeDeleteChoice(){ deleteChoiceOverlay.classList.remove("open"); }
 
+  var deleteScopeOverlay = document.getElementById("deleteScopeOverlay");
+  function closeDeleteScope(){ deleteScopeOverlay.classList.remove("open"); }
+
+  /* Paso 1 del borrado: si el evento es de Todos/Ambos y se abrió desde la
+     card de un estudiante concreto, se pregunta si se elimina solo para ese
+     estudiante o para todos. */
   document.getElementById("btnDeleteEvent").addEventListener("click", function(){
     if(!editingId) return;
     var ev = DATA.events.find(function(e){return e.id===editingId;});
+    if(!ev) return;
+    if(ev.studentId==="all" && currentContextStudentId && DATA.students.length>1){
+      var st = getStudent(currentContextStudentId);
+      var nombre = st ? st.name : "este estudiante";
+      document.getElementById("deleteScopeText").textContent =
+        'Este evento está asignado a '+allLabel()+'. ¿Deseas eliminarlo solo para '+nombre+', o para '+allLabel().toLowerCase()+'?';
+      document.getElementById("btnDeleteOnlyStudent").textContent = "Eliminar solo para "+nombre;
+      document.getElementById("btnDeleteForEveryone").textContent = "Eliminar para "+allLabel().toLowerCase();
+      deleteScopeOverlay.classList.add("open");
+      return;
+    }
+    proceedDeleteEvent();
+  });
+
+  document.getElementById("btnDeleteOnlyStudent").addEventListener("click", function(){
+    if(!editingId || !currentContextStudentId) return;
+    var ev = DATA.events.find(function(e){return e.id===editingId;});
+    if(!ev) return;
+    ev.excludedStudents = ev.excludedStudents || [];
+    if(ev.excludedStudents.indexOf(currentContextStudentId)===-1){
+      ev.excludedStudents.push(currentContextStudentId);
+    }
+    /* Si ya no queda ningún estudiante para el que aplique, se borra entero. */
+    var quedan = DATA.students.filter(function(s){ return ev.excludedStudents.indexOf(s.id)===-1; });
+    if(quedan.length===0){
+      DATA.events = DATA.events.filter(function(e){return e.id!==editingId;});
+    }
+    saveData();
+    closeDeleteScope();
+    closeEventModal();
+    render();
+  });
+
+  document.getElementById("btnDeleteForEveryone").addEventListener("click", function(){
+    closeDeleteScope();
+    proceedDeleteEvent();
+  });
+
+  document.getElementById("btnDeleteScopeCancel").addEventListener("click", closeDeleteScope);
+  deleteScopeOverlay.addEventListener("click", function(e){ if(e.target===deleteScopeOverlay) closeDeleteScope(); });
+
+  /* Paso 2: borrado normal (único -> confirmación; recurrente -> ocurrencia o cadena) */
+  function proceedDeleteEvent(){
+    if(!editingId) return;
+    var ev = DATA.events.find(function(e){return e.id===editingId;});
+    if(!ev) return;
     if(ev.kind==="single"){
       showAppConfirm("¿Eliminar este evento?", function(){
         DATA.events = DATA.events.filter(function(e){return e.id!==editingId;});
@@ -1838,7 +1918,7 @@
       : 'Este evento ("'+ev.title+'") se repite en varias fechas. ¿Qué deseas eliminar?';
     document.getElementById("btnDeleteOnlyThis").style.display = currentOccurrenceDate ? "block" : "none";
     deleteChoiceOverlay.classList.add("open");
-  });
+  }
 
   document.getElementById("btnDeleteOnlyThis").addEventListener("click", function(){
     if(!editingId || !currentOccurrenceDate) return;
